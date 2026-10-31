@@ -1,0 +1,47 @@
+# --- Unity: carpetas generadas (ancladas a Game/) ---
+/Game/[Ll]ibrary/
+/Game/[Tt]emp/
+/Game/[Oo]bj/
+/Game/[Bb]uild/
+/Game/[Bb]uilds/
+/Game/[Ll]ogs/
+/Game/[Uu]serSettings/
+/Game/.vs/
+/Game/*.csproj
+/Game/*.sln
+/Game/*.slnx
+/Game/*.suo
+/Game/*.user
+# Los archivos .meta de Unity SE VERSIONAN: no los ignores.
+
+# --- Editores ---
+.vs/
+.idea/
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+
+# --- Secretos y archivos locales ---
+.env
+.env.*
+!.env.example
+.claude/settings.local.json
+# Rutas protegidas propias de cada máquina (respaldos, copias de trabajo): no se publican.
+/.claude/hooks/protected_paths.local.txt
+
+# --- Registros ---
+# Los .log se ignoran en todo el repositorio, incluidos tests/ y migration/
+# (pueden contener rutas locales y el nombre de usuario). Para conservar un
+# resultado de validación, resúmelo en un informe .md o .json sin datos locales.
+*.log
+
+# --- Plantillas de terceros (PROVISIONAL) ---
+# Se ignoran hasta revisar sus licencias, porque el repositorio es público.
+# Ignorar NO elimina del historial de Git lo que ya estuviera versionado
+# ni protege archivos que ya se hayan subido. Ver THIRD_PARTY.md.
+/templates/originals/
+/templates/working/

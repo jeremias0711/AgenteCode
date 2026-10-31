@@ -1,0 +1,7 @@
+# Scripts de Python de SOLO LECTURA que pueden recibir rutas protegidas (p. ej. templates/originals/)
+# como argumento. Formato:  ruta/relativa/al/proyecto.py  SHA-256-completo
+# Si el contenido del script cambia, deja de estar permitido hasta que alguien actualice el hash
+# AQUÍ (a mano: este archivo está protegido frente a los agentes).
+# Calcular el hash:  Get-FileHash orchestrator\verify_originals.py -Algorithm SHA256
+#
+# (vacío por ahora: el coordinador Python todavía no existe)
