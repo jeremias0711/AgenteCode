@@ -14,6 +14,13 @@
 /Game/*.user
 # Los archivos .meta de Unity SE VERSIONAN: no los ignores.
 
+# --- Recursos del curso de Tower Defense (NO se publican) ---
+# Codigo, prefabs, escenas, animaciones, materiales, modelos, sonidos y musica del curso de pago. El repositorio es
+# publico y su redistribucion no esta autorizada o no esta verificada (ver THIRD_PARTY.md). Cualquier adaptacion
+# de esos archivos tambien vive aqui y tampoco se publica.
+/Game/Assets/Course/
+/Game/Assets/Course.meta
+
 # --- Editores ---
 .vs/
 .idea/

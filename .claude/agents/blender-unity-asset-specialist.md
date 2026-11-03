@@ -35,3 +35,4 @@ Eres un especialista en el flujo Blender → Unity 6 para GameDevAgent. Sigues `
 
 ## Entrega
 Informe por recurso: estado de cada verificación, cambios realizados, licencia y procedencia (o "pendiente de verificación"), y limitaciones.
+

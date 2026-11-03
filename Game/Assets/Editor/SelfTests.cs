@@ -97,7 +97,7 @@ namespace GameDevAgent.TowerDefense
             Created.Clear();
 
             // Enemies cloned by the spawner are not tracked in Created.
-            foreach (var enemy in UnityEngine.Object.FindObjectsByType<Enemy>(FindObjectsSortMode.None))
+            foreach (var enemy in UnityEngine.Object.FindObjectsByType<Enemy>())
                 if (enemy != null && enemy.name.StartsWith("SelfTest"))
                     UnityEngine.Object.DestroyImmediate(enemy.gameObject);
         }
@@ -236,7 +236,7 @@ namespace GameDevAgent.TowerDefense
         private static List<Enemy> LiveEnemies(Enemy template)
         {
             var list = new List<Enemy>();
-            foreach (var e in UnityEngine.Object.FindObjectsByType<Enemy>(FindObjectsSortMode.None))
+            foreach (var e in UnityEngine.Object.FindObjectsByType<Enemy>())
                 if (e != null && e != template) list.Add(e);
             return list;
         }
@@ -327,7 +327,7 @@ namespace GameDevAgent.TowerDefense
 
         private static void TestMainScene()
         {
-            string full = Path.GetFullPath(Path.Combine(Application.dataPath, "Scenes", "Main.unity"));
+            string full = System.IO.Path.GetFullPath(System.IO.Path.Combine(Application.dataPath, "Scenes", "Main.unity"));
             if (!File.Exists(full)) throw new SkipException(ScenePath + " does not exist yet");
 
             if (!Application.isBatchMode && !EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo())
@@ -335,20 +335,20 @@ namespace GameDevAgent.TowerDefense
 
             EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
 
-            Equal(1, UnityEngine.Object.FindObjectsByType<BaseHealth>(FindObjectsSortMode.None).Length, "BaseHealth count");
-            var spawners = UnityEngine.Object.FindObjectsByType<WaveSpawner>(FindObjectsSortMode.None);
+            Equal(1, UnityEngine.Object.FindObjectsByType<BaseHealth>().Length, "BaseHealth count");
+            var spawners = UnityEngine.Object.FindObjectsByType<WaveSpawner>();
             Equal(1, spawners.Length, "WaveSpawner count");
             Equal(3, spawners[0].TotalWaves, "WaveSpawner.TotalWaves");
-            Equal(1, UnityEngine.Object.FindObjectsByType<GameManager>(FindObjectsSortMode.None).Length, "GameManager count");
-            Equal(1, UnityEngine.Object.FindObjectsByType<GameHud>(FindObjectsSortMode.None).Length, "GameHud count");
+            Equal(1, UnityEngine.Object.FindObjectsByType<GameManager>().Length, "GameManager count");
+            Equal(1, UnityEngine.Object.FindObjectsByType<GameHud>().Length, "GameHud count");
 
-            var paths = UnityEngine.Object.FindObjectsByType<PathWaypoints>(FindObjectsSortMode.None);
+            var paths = UnityEngine.Object.FindObjectsByType<PathWaypoints>();
             bool pathOk = false;
             foreach (var p in paths) if (p.Count >= 5) pathOk = true;
             Check(pathOk, "no PathWaypoints with Count >= 5");
 
             bool cameraOk = false;
-            foreach (var c in UnityEngine.Object.FindObjectsByType<Camera>(FindObjectsSortMode.None))
+            foreach (var c in UnityEngine.Object.FindObjectsByType<Camera>())
                 if (c.name == "Main Camera" && c.enabled && c.gameObject.activeInHierarchy) cameraOk = true;
             Check(cameraOk, "no enabled Main Camera");
         }

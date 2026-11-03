@@ -106,9 +106,9 @@ namespace GameDevAgent.TowerDefense
 
         private static bool Begin()
         {
-            manager = Object.FindFirstObjectByType<GameManager>();
-            spawner = Object.FindFirstObjectByType<WaveSpawner>();
-            baseHealth = Object.FindFirstObjectByType<BaseHealth>();
+            manager = Object.FindAnyObjectByType<GameManager>();
+            spawner = Object.FindAnyObjectByType<WaveSpawner>();
+            baseHealth = Object.FindAnyObjectByType<BaseHealth>();
             if (manager == null || spawner == null || baseHealth == null)
             {
                 // Scene objects may not be ready on the first frame; give up only on the timeout.
