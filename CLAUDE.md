@@ -78,7 +78,8 @@ actualizar dependencias fuera del plan, ni migrar `Game/`.
   terceros antes de incorporarlo o publicarlo.
 - Registra cada recurso en `THIRD_PARTY.md`.
 - El repositorio es público: no se publican recursos cuya
-  licencia no esté verificada. `templates/originals/` y
+  licencia no esté verificada. `templates/o
+  riginals/` y
   `templates/working/` se ignoran en Git provisionalmente.
 
 ## Operaciones restringidas

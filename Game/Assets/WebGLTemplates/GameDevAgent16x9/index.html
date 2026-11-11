@@ -3,12 +3,18 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- viewport-fit=cover lets env(safe-area-inset-*) report the notch/rounded corners; the template then insets the canvas by those values. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#000000">
     <title>{{{ PRODUCT_NAME }}}</title>
     <link rel="icon" href="data:,"> <!-- no favicon file: avoids a 404 request in the console -->
     <style>
-      /* Minimal responsive template: the canvas keeps a 16:9 aspect ratio, is centered and shrinks with the window.
-         Unity matches its render size to the canvas DOM size, so the game UI (CanvasScaler) adapts by itself. */
+      /* DESKTOP (default): the canvas keeps a 16:9 aspect ratio, is centered and shrinks with the window.
+         Unity matches its render size to the canvas DOM size, so the game UI (CanvasScaler) adapts by itself.
+         TOUCH DEVICES (html.gda-mobile, set by the script below when pointer: coarse): see the "mobile" block. */
       html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; }
       #unity-container { position: fixed; left: 0; top: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: center; }
       #unity-canvas {
@@ -21,7 +27,72 @@
       #unity-progress-empty { width: 240px; height: 10px; margin: 8px auto 0; background: #444; border-radius: 5px; overflow: hidden; }
       #unity-progress-full { width: 0%; height: 100%; background: #2fa7e8; }
       #unity-warning { position: absolute; left: 50%; top: 2%; transform: translateX(-50%); display: none; font: 14px Arial, sans-serif; }
+
+      /* Mobile-only UI is hidden everywhere unless html.gda-mobile is present. */
+      #gda-fs-enter, #gda-fs-exit, #gda-rotate, #gda-toast { display: none; }
+
+      /* ---- mobile (touch) ---------------------------------------------------------------------------------------
+         * #unity-container is position:fixed with all four offsets 0, so it always matches the VISIBLE area (dynamic
+           viewport) and not 100vh, which on Chrome/Safari mobile also covers the zone under the browser toolbar.
+         * Its padding is the safe area (notch, rounded corners, gesture bar); the canvas lives inside the padding box.
+         * The script sets the canvas size in px from the container's real size: it adopts the aspect ratio of the
+           visible area between 16:9 and GDA_MAX_ASPECT (wider screens use the extra width, the HUD anchors to the
+           edges); narrower than 16:9 it is letterboxed 16:9. The picture is never stretched: Unity renders at the
+           canvas' own proportions.
+         * Fallback before the script runs: same 16:9 formula but with 100dvh. */
+      html.gda-mobile, html.gda-mobile body {
+        position: fixed; inset: 0; overscroll-behavior: none; touch-action: none;
+        -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent;
+      }
+      html.gda-mobile #unity-container {
+        box-sizing: border-box;
+        padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
+        touch-action: none;
+      }
+      html.gda-mobile #unity-canvas {
+        width: min(100vw, calc(100dvh * 16 / 9));
+        height: min(100dvh, calc(100vw * 9 / 16));
+        touch-action: none; -webkit-tap-highlight-color: transparent; outline: none;
+      }
+      html.gda-mobile .gda-btn {
+        display: none; position: absolute; z-index: 20; width: 44px; height: 44px; box-sizing: border-box; padding: 0; margin: 0;
+        border: 1px solid rgba(255,255,255,.55); border-radius: 10px; background: rgba(0,0,0,.45); color: #fff; cursor: pointer;
+        touch-action: manipulation; opacity: .55; transition: opacity .25s; -webkit-appearance: none; appearance: none;
+      }
+      html.gda-mobile .gda-btn:active, html.gda-mobile .gda-btn:focus-visible { opacity: 1; }
+      html.gda-mobile .gda-btn svg { width: 24px; height: 24px; display: block; margin: 0 auto; fill: none; stroke: #fff; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+      /* bottom-right corner, inside the safe area (the container padding), away from the HUD (top) */
+      html.gda-mobile #gda-fs-enter, html.gda-mobile #gda-fs-exit {
+        right: calc(env(safe-area-inset-right, 0px) + 8px); bottom: calc(env(safe-area-inset-bottom, 0px) + 8px);
+      }
+      html.gda-mobile.gda-fs-can:not(.gda-fs-on):not(.gda-loading) #gda-fs-enter { display: block; }
+      html.gda-mobile.gda-fs-on #gda-fs-exit { display: block; }
+      html.gda-mobile #gda-toast {
+        position: absolute; left: 50%; bottom: calc(env(safe-area-inset-bottom, 0px) + 60px); transform: translateX(-50%); z-index: 30;
+        max-width: 80%; padding: 6px 12px; border-radius: 8px; background: rgba(0,0,0,.75); color: #fff; font: 13px Arial, sans-serif;
+        text-align: center; pointer-events: none;
+      }
+      html.gda-mobile #gda-toast.gda-show { display: block; }
+      html.gda-mobile #gda-rotate {
+        position: absolute; inset: 0; z-index: 40; flex-direction: column; align-items: center; justify-content: center;
+        background: rgba(0,0,0,.82); color: #fff; font: 16px Arial, sans-serif; text-align: center; padding: 24px;
+      }
+      html.gda-mobile.gda-portrait:not(.gda-rotate-dismissed) #gda-rotate { display: flex; }
+      html.gda-mobile #gda-rotate svg { width: 64px; height: 64px; margin-bottom: 12px; fill: none; stroke: #fff; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; animation: gda-rot 2.4s ease-in-out infinite; }
+      html.gda-mobile #gda-rotate button { margin-top: 16px; padding: 8px 14px; min-height: 44px; border-radius: 8px; border: 1px solid rgba(255,255,255,.6); background: transparent; color: #fff; font: 14px Arial, sans-serif; touch-action: manipulation; }
+      @keyframes gda-rot { 0%, 20% { transform: rotate(0deg); } 60%, 100% { transform: rotate(-90deg); } }
     </style>
+    <script>
+      // Decide the mode as early as possible (before the first paint). ?gdaMobile=1 / ?gdaMobile=0 forces it (for tests).
+      (function () {
+        var q = /[?&]gdaMobile=([01])/.exec(location.search);
+        var coarse = !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
+        var touch = (navigator.maxTouchPoints || 0) > 0 || ('ontouchstart' in window);
+        var mobile = q ? q[1] === '1' : (coarse && touch);
+        window.GDA_isMobile = mobile;
+        if (mobile) document.documentElement.className += ' gda-mobile gda-loading';
+      })();
+    </script>
   </head>
   <body>
     <div id="unity-container">
@@ -31,6 +102,20 @@
         <div id="unity-progress-empty"><div id="unity-progress-full"></div></div>
       </div>
       <div id="unity-warning"></div>
+      <!-- mobile-only controls (hidden unless html.gda-mobile) -->
+      <button id="gda-fs-enter" class="gda-btn" type="button" aria-label="Pantalla completa" title="Pantalla completa">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+      </button>
+      <button id="gda-fs-exit" class="gda-btn" type="button" aria-label="Salir de pantalla completa" title="Salir de pantalla completa">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg>
+      </button>
+      <div id="gda-toast" role="status" aria-live="polite"></div>
+      <div id="gda-rotate">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg>
+        <div>Gira el tel&eacute;fono a horizontal para jugar</div>
+        <div style="font-size:13px;opacity:.75;margin-top:4px">Rotate your phone to landscape</div>
+        <button id="gda-rotate-ok" type="button">Continuar en vertical / Continue</button>
+      </div>
     </div>
     <script src="Build/{{{ LOADER_FILENAME }}}"></script>
     <script>
@@ -49,6 +134,151 @@
         }
         banner.style.display = banner.children.length ? "block" : "none";
       }
+
+      // ---------------------------------------------------------------------------------------------------------
+      // Mobile (touch) support. Everything below returns immediately on desktop (window.GDA_isMobile === false).
+      // ---------------------------------------------------------------------------------------------------------
+      // Maximum canvas aspect ratio (width / height) on touch devices. Wider visible areas get side bars of this ratio.
+      var GDA_MAX_ASPECT = 2.4;
+      var GDA_MIN_ASPECT = 16 / 9;
+      window.GDA_layoutVersion = 0;
+      window.GDA_layoutJson = "";
+
+      (function () {
+        if (!window.GDA_isMobile) return;
+        var root = document.documentElement;
+        var container = document.getElementById("unity-container");
+        var canvas = document.getElementById("unity-canvas");
+        var btnEnter = document.getElementById("gda-fs-enter");
+        var btnExit = document.getElementById("gda-fs-exit");
+        var toast = document.getElementById("gda-toast");
+        var toastTimer = 0, layoutTimer = 0, lastJson = "";
+
+        function px(v) { var n = parseFloat(v); return isNaN(n) ? 0 : n; }
+        function fsElement() { return document.fullscreenElement || document.webkitFullscreenElement || null; }
+        function fsOn() { return !!fsElement(); }
+
+        // ---- layout: size the canvas from the real visible area ----
+        function layout() {
+          var cs = getComputedStyle(container);
+          var padL = px(cs.paddingLeft), padR = px(cs.paddingRight), padT = px(cs.paddingTop), padB = px(cs.paddingBottom);
+          var w = container.clientWidth, h = container.clientHeight;
+          // Never exceed what is actually visible, whichever source is smallest (fixed box, innerHeight, visualViewport).
+          if (window.innerWidth > 0) w = Math.min(w, window.innerWidth);
+          if (window.innerHeight > 0) h = Math.min(h, window.innerHeight);
+          var vv = window.visualViewport;
+          if (vv) { if (vv.width > 0) w = Math.min(w, vv.width); if (vv.height > 0) h = Math.min(h, vv.height); }
+          var aw = Math.max(1, Math.floor(w - padL - padR)), ah = Math.max(1, Math.floor(h - padT - padB));
+          var cw = Math.min(aw, ah * GDA_MAX_ASPECT);
+          var ch = Math.min(ah, cw / GDA_MIN_ASPECT);
+          cw = Math.floor(cw); ch = Math.floor(ch);
+          canvas.style.width = cw + "px";
+          canvas.style.height = ch + "px";
+          // The container is a flex box: with a padding smaller than the real area it keeps the canvas centered in the padding box.
+          var portrait = ah > aw;
+          root.classList.toggle("gda-portrait", portrait);
+          publish({ mobile: true, cssW: cw, cssH: ch, areaW: aw, areaH: ah, dpr: window.devicePixelRatio || 1, fullscreen: fsOn(), portrait: portrait,
+                    safe: [padT, padR, padB, padL] });
+        }
+        function publish(o) {
+          var json = JSON.stringify(o);
+          if (json === lastJson) return;
+          lastJson = json;
+          window.GDA_layoutJson = json;
+          window.GDA_layoutVersion++;
+        }
+        function scheduleLayout() {
+          layout();
+          // Browsers (iOS in particular) report the final size a bit after resize/orientationchange: re-measure.
+          clearTimeout(layoutTimer);
+          layoutTimer = setTimeout(layout, 120);
+          setTimeout(layout, 450);
+        }
+        window.addEventListener("resize", scheduleLayout);
+        window.addEventListener("orientationchange", scheduleLayout);
+        if (window.visualViewport) {
+          window.visualViewport.addEventListener("resize", scheduleLayout);
+          window.visualViewport.addEventListener("scroll", scheduleLayout);
+        }
+        if (window.ResizeObserver) new ResizeObserver(layout).observe(container);
+        layout();
+
+        // ---- no scroll / zoom / pull-to-refresh / long-press menu ----
+        document.addEventListener("touchmove", function (e) { if (e.cancelable) e.preventDefault(); }, { passive: false });
+        document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
+        document.addEventListener("contextmenu", function (e) { e.preventDefault(); });
+
+        // ---- toast ----
+        function showToast(msg) {
+          toast.textContent = msg;
+          toast.classList.add("gda-show");
+          clearTimeout(toastTimer);
+          toastTimer = setTimeout(function () { toast.classList.remove("gda-show"); }, 3500);
+        }
+
+        // ---- fullscreen (only ever started by a tap on the button) ----
+        var fsTarget = container;
+        var requestFs = fsTarget.requestFullscreen || fsTarget.webkitRequestFullscreen || null;
+        var fsEnabled = !!(document.fullscreenEnabled || document.webkitFullscreenEnabled);
+        var standalone = !!(window.matchMedia && (window.matchMedia("(display-mode: fullscreen)").matches || window.matchMedia("(display-mode: standalone)").matches)) || window.navigator.standalone === true;
+        var canFs = !!requestFs && fsEnabled && !standalone;
+        if (canFs) root.classList.add("gda-fs-can"); // iPhone Safari (no element fullscreen) and installed web apps: no button
+        window.GDA_fullscreenSupported = canFs;
+
+        function syncFs() {
+          root.classList.toggle("gda-fs-on", fsOn());
+          scheduleLayout();
+        }
+        document.addEventListener("fullscreenchange", syncFs);
+        document.addEventListener("webkitfullscreenchange", syncFs);
+        document.addEventListener("fullscreenerror", function () { showToast("No se pudo activar la pantalla completa."); });
+        document.addEventListener("webkitfullscreenerror", function () { showToast("No se pudo activar la pantalla completa."); });
+
+        function stopTouch(e) { e.stopPropagation(); }
+        ["touchstart", "touchend", "pointerdown", "pointerup", "mousedown", "mouseup"].forEach(function (t) {
+          btnEnter.addEventListener(t, stopTouch); btnExit.addEventListener(t, stopTouch);
+          document.getElementById("gda-rotate").addEventListener(t, stopTouch);
+        });
+
+        btnEnter.addEventListener("click", function (e) {
+          e.preventDefault();
+          if (!canFs || !requestFs) { showToast("Pantalla completa no disponible en este navegador."); return; }
+          var result;
+          try {
+            result = requestFs.call(fsTarget, { navigationUI: "hide" });
+          } catch (err) {
+            try { result = requestFs.call(fsTarget); } catch (err2) { showToast("Pantalla completa no disponible en este navegador."); return; }
+          }
+          if (result && typeof result.then === "function") {
+            result.then(function () {
+              // Best effort: keep landscape while in fullscreen (Android Chrome only; iOS and desktop reject it).
+              try {
+                if (screen.orientation && screen.orientation.lock) {
+                  var p = screen.orientation.lock("landscape");
+                  if (p && p.catch) p.catch(function () {});
+                }
+              } catch (err3) {}
+            }, function () { showToast("No se pudo activar la pantalla completa."); });
+          }
+        });
+        btnExit.addEventListener("click", function (e) {
+          e.preventDefault();
+          try {
+            if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock();
+          } catch (err) {}
+          try {
+            var exit = document.exitFullscreen || document.webkitExitFullscreen;
+            var r = exit && exit.call(document);
+            if (r && r.catch) r.catch(function () { showToast("No se pudo salir de pantalla completa."); });
+          } catch (err2) { showToast("No se pudo salir de pantalla completa."); }
+        });
+
+        document.getElementById("gda-rotate-ok").addEventListener("click", function () { root.classList.add("gda-rotate-dismissed"); });
+        // Dismissal only lasts while portrait: next time the phone goes landscape and back, the notice returns.
+        window.addEventListener("resize", function () { if (!root.classList.contains("gda-portrait")) root.classList.remove("gda-rotate-dismissed"); });
+
+        window.GDA_onUnityReady = function () { root.classList.remove("gda-loading"); layout(); };
+      })();
 
       createUnityInstance(document.querySelector("#unity-canvas"), {
         arguments: [],
@@ -75,6 +305,7 @@
       }).then(function (unityInstance) {
         document.querySelector("#unity-loading").style.display = "none";
         window.unityInstance = unityInstance;
+        if (window.GDA_onUnityReady) window.GDA_onUnityReady();
       }).catch(function (message) {
         alert(message);
       });
