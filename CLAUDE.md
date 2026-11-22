@@ -16,6 +16,85 @@ GameDevAgent desarrolla videojuegos Tower Defense con Unity y C#,
 aplicando programación orientada a objetos, principios SOLID,
 modularidad y pruebas.
 
+## Autonomía permanente de desarrollo
+
+Claude Code tiene autorización permanente para ejecutar de forma autónoma las tareas de desarrollo, mantenimiento, integración, corrección y optimización que el usuario solicite expresamente dentro del proyecto GameDevAgent.
+
+Esta autorización comprende las operaciones técnicamente necesarias dentro del alcance de cada tarea, incluyendo:
+
+- Inspeccionar archivos y dependencias.
+- Crear y modificar scripts C#.
+- Modificar escenas y prefabs.
+- Crear componentes y controladores.
+- Integrar recursos 3D y animaciones autorizados.
+- Actualizar interfaces y sistemas UI/UX.
+- Corregir errores.
+- Crear y modificar pruebas automatizadas.
+- Ejecutar pruebas.
+- Compilar versiones de desarrollo.
+- Corregir errores derivados de la implementación.
+- Generar informes de resultados.
+
+### Regla de ejecución
+
+Cuando el usuario solicite implementar, corregir, actualizar o integrar una funcionalidad, esa solicitud constituye autorización para realizar los cambios necesarios dentro de su alcance.
+
+No solicites una segunda autorización para comenzar.
+
+No solicites confirmación por cada archivo, script, escena, prefab o componente que necesites modificar.
+
+No detengas la ejecución después de una auditoría inicial.
+
+No exijas que el usuario apruebe un plan técnico antes de implementar una tarea que ya ha autorizado.
+
+Claude Code debe tomar autónomamente las decisiones técnicas razonables, conservando la arquitectura existente.
+
+### Flujo de trabajo
+
+1. Inspeccionar los componentes relacionados.
+2. Identificar el problema o necesidad.
+3. Determinar la solución técnica.
+4. Implementar los cambios necesarios.
+5. Ejecutar pruebas específicas.
+6. Corregir errores encontrados.
+7. Ejecutar la regresión pertinente.
+8. Entregar un informe final.
+
+La planificación y revisión son etapas internas del trabajo.
+
+No requieren autorización intermedia.
+
+### Cuándo detenerse
+
+Solicita autorización únicamente cuando:
+
+- El usuario no haya definido un requisito indispensable y no exista una alternativa técnica segura.
+- Sea necesario modificar archivos fuera del alcance autorizado.
+- Se requiera una operación Git.
+- Sea necesario instalar o actualizar dependencias.
+- Se necesite modificar configuraciones de seguridad.
+- La tarea implique eliminar o sobrescribir material importante.
+- Sea necesario publicar o distribuir recursos.
+- Exista un bloqueo real de permisos.
+
+No interpretes una decisión técnica habitual como motivo para solicitar autorización.
+
+### Restricciones
+
+Esta autonomía no concede permisos para operaciones expresamente prohibidas.
+
+No autoriza:
+
+- Operaciones Git.
+- Publicación de recursos.
+- Instalaciones no aprobadas.
+- Modificaciones de seguridad.
+- Cambios en CLAUDE.md.
+- Eliminaciones o movimientos masivos.
+- Modificaciones ajenas al objetivo solicitado.
+
+Los permisos técnicos efectivos de Claude Code continúan siendo obligatorios.
+
 ## Arquitectura del sistema
 - Claude Code es el programador principal.
 - Python (`orchestrator/`) actúa como coordinador de tareas y
@@ -24,21 +103,48 @@ modularidad y pruebas.
 - Agentes especializados en `.claude/agents/`:
   `unity-game-developer`, `unity6-migration-specialist`,
   `code-reviewer` (solo lectura) y `blender-unity-asset-specialist`.
-  Que un agente exista no equivale a una autorización para
-  ejecutar sus tareas.
+  ### Coordinación y autonomía
+
+Claude Code es el programador principal y coordinador técnico de GameDevAgent.
+
+Los agentes especializados pueden utilizarse cuando aporten conocimientos relevantes para la tarea.
+
+Claude Code está autorizado a delegar subtareas comprendidas dentro del alcance de una solicitud de implementación, sin pedir una autorización adicional para utilizar cada agente.
+
+La delegación no amplía los permisos de lectura, escritura, ejecución o publicación establecidos para el proyecto.
+
+Para modificaciones pequeñas o localizadas, Claude Code puede implementar directamente sin necesidad de invocar agentes especializados.
+
+No se debe interpretar la existencia de agentes como una obligación de delegar todas las tareas.
 
 ## Versiones de Unity
-- Unity 6 es la versión objetivo prevista para el juego principal
-  (`Game/`).
-- `Game/` todavía NO está verificado como proyecto Unity 6 válido:
-  no tiene `ProjectSettings/ProjectVersion.txt` ni `manifest.json`
-  reales. Hasta comprobarlo, no afirmes que lo es. Crear o configurar
-  ese proyecto requiere autorización expresa.
-- Las plantillas originales son de Unity 2021. Su migración a
-  Unity 6 se hace por separado, con autorización expresa y solo
-  sobre copias de trabajo (ver la excepción más abajo).
-- Si la versión real del proyecto difiere de la prevista, vale la
-  real y se consulta al usuario.
+
+El proyecto principal GameDevAgent está desarrollado y probado en Unity 6, versión 6000.6.7f1.
+
+La carpeta `Game/` contiene el proyecto Unity principal.
+
+El videojuego dispone de:
+
+- Seis niveles jugables.
+- Tres mapas.
+- Sistemas de combate y oleadas.
+- Cuatro defensores.
+- Tutorial interactivo.
+- Colección de personajes.
+- Interfaz UI/UX basada en Figma.
+- Compatibilidad Web de escritorio.
+- Compatibilidad Web móvil.
+- Compilaciones Windows y WebGL.
+
+El desarrollo habitual del proyecto Unity 6 está autorizado dentro de `Game/`, conforme al alcance de las tareas solicitadas.
+
+No se requiere autorización adicional para modificar scripts, escenas, prefabs o componentes relacionados directamente con una tarea de implementación ya solicitada.
+
+Las plantillas originales de Unity 2021 deben permanecer protegidas.
+
+No actualices la versión de Unity ni las dependencias sin autorización específica.
+
+Si se detecta una incompatibilidad técnica, busca primero una solución compatible con la versión actual.
 
 ## Reglas obligatorias
 1. Analiza el repositorio antes de modificar archivos.
@@ -87,9 +193,25 @@ No realices sin autorización expresa: commits, pushes,
 instalaciones, eliminaciones, movimientos masivos, cambios de
 visibilidad del repositorio ni operaciones destructivas.
 
-## Flujo obligatorio
-ANALIZAR → PLANIFICAR → IMPLEMENTAR → VERIFICAR
-→ REVISAR → DOCUMENTAR.
+## Flujo obligatorio de desarrollo
+
+ANALIZAR → PLANIFICAR → IMPLEMENTAR → VERIFICAR → REVISAR → DOCUMENTAR.
+
+Este flujo se ejecuta de manera autónoma.
+
+La planificación es una actividad interna y no requiere aprobación intermedia cuando la implementación ya fue solicitada por el usuario.
+
+Claude Code debe completar la tarea de principio a fin, salvo que encuentre un bloqueo real o necesite ampliar el alcance autorizado.
+
+Al finalizar, debe entregar un informe con:
+
+- Cambios realizados.
+- Archivos modificados.
+- Pruebas ejecutadas.
+- Resultados.
+- Limitaciones pendientes.
+
+Evita generar informes extensos de auditoría antes de implementar, salvo cuando el usuario solicite expresamente una auditoría.
 
 ## Criterio de finalización
 Una tarea solo se considera terminada cuando:

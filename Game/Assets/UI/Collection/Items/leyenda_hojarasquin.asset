@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: df3695505aa40234c91a2efd58c5e79e, type: 3}
+  m_Name: leyenda_hojarasquin
+  m_EditorClassIdentifier: Assembly-CSharp::CollectionItemDefinition
+  id: leyenda_hojarasquin
+  displayName: "el hojarasqu\xEDn"
+  category: 0
+  subtitle: "guardi\xE1n del monte"
+  lore: Ser del bosque cubierto de hojarasca y ramas. Protege a los animales y desorienta a los cazadores.
+  icon: {fileID: 21300000, guid: 068455a9826e1a34fb041ceddf587c08, type: 3}
+  placeholderArt: 1
+  unlockRule: 2
+  unlockLevelId: 0
+  unlockHint: "llegar\xE1 en una pr\xF3xima actualizaci\xF3n"
+  selectable: 0
+  ownerItemId: 
+  contentKey: 

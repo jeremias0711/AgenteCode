@@ -52,3 +52,6 @@ venv/
 # ni protege archivos que ya se hayan subido. Ver THIRD_PARTY.md.
 /templates/originals/
 /templates/working/
+
+# Fuentes 3D de Blender (fuera de Git: superan los limites de GitHub)
+3D_Videojuego/

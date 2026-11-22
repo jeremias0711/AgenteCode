@@ -1,0 +1,164 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 693a062fcdceca345a36c4e1b7504dc1, type: 3}
+  m_Name: UiSkin
+  m_EditorClassIdentifier: Assembly-CSharp::UiSkin
+  sprites:
+  - name: panel_surface
+    sprite: {fileID: 21300000, guid: 8d22fac9847018441a6271ab6587ab99, type: 3}
+  - name: panel_deep
+    sprite: {fileID: 21300000, guid: 7a5f6edc89100d74ea1c911fee17343b, type: 3}
+  - name: tray_deep
+    sprite: {fileID: 21300000, guid: d9d41cf7a5c19d94ab7f6fbdfe39650a, type: 3}
+  - name: pill_deep
+    sprite: {fileID: 21300000, guid: 15c16199c3ab9ab46941f55deb56df61, type: 3}
+  - name: button_primary
+    sprite: {fileID: 21300000, guid: 8e9a31b6e8bab0c4b9a2be749bb58cdb, type: 3}
+  - name: plate_surface
+    sprite: {fileID: 21300000, guid: a385e1baee81ec04a9313971d4ad443b, type: 3}
+  - name: card_normal
+    sprite: {fileID: 21300000, guid: 0ee5f1ccbe4b7ff459f7f077480dd605, type: 3}
+  - name: card_selected
+    sprite: {fileID: 21300000, guid: 7c666b6737a668949968727437e995c6, type: 3}
+  - name: card_nogold
+    sprite: {fileID: 21300000, guid: eb4740f3efc207b4584280580bc595d5, type: 3}
+  - name: bar_track
+    sprite: {fileID: 21300000, guid: 83c27c0f86372284e9b7794419e78c43, type: 3}
+  - name: bar_fill
+    sprite: {fileID: 21300000, guid: c6d8e10efc01bfb43b9f8b51185ae82d, type: 3}
+  - name: shine
+    sprite: {fileID: 21300000, guid: 67234cefec0419d478da582029616170, type: 3}
+  - name: ribbon_band
+    sprite: {fileID: 21300000, guid: f1eb6a7b88b97af4fb8f32b970371925, type: 3}
+  - name: plate_primary
+    sprite: {fileID: 21300000, guid: 33d68dedb1a240d4b9e9cb7bb48bd00c, type: 3}
+  - name: shine_primary
+    sprite: {fileID: 21300000, guid: c262e537e33d57143a060c02d3970ae3, type: 3}
+  - name: brand_deep
+    sprite: {fileID: 21300000, guid: 9bcfcfd0e41b5d746bd1b37f4c975d7f, type: 3}
+  - name: level_card
+    sprite: {fileID: 21300000, guid: 2af8a315822c2e84f878cd56d82561d8, type: 3}
+  - name: level_next
+    sprite: {fileID: 21300000, guid: 861045807715ba248b10d612e345381f, type: 3}
+  - name: level_locked
+    sprite: {fileID: 21300000, guid: 45aa283622fb365498b28577b7d937d8, type: 3}
+  - name: level_ring
+    sprite: {fileID: 21300000, guid: 81387af7179ade340b4e5d5200d02802, type: 3}
+  - name: detail_deep
+    sprite: {fileID: 21300000, guid: e7102720fd20dcb488f8b6b9399c0d68, type: 3}
+  - name: button_panel
+    sprite: {fileID: 21300000, guid: 8d2ee99a6cdc8a04fa88a7827fdc51b4, type: 3}
+  - name: panel_bone
+    sprite: {fileID: 21300000, guid: dd6913e85a4ba0047bd070f3ed756f8c, type: 3}
+  - name: card_light
+    sprite: {fileID: 21300000, guid: fecfb839dffc6774caeadafc2f13a9bd, type: 3}
+  - name: circle_surface
+    sprite: {fileID: 21300000, guid: 8576edc0f8be6f2479368effbfe6216f, type: 3}
+  - name: circle_dark
+    sprite: {fileID: 21300000, guid: 7e0b9cd9f322bc2449eacf8f4716e2d1, type: 3}
+  - name: circle_deep
+    sprite: {fileID: 21300000, guid: 6bc3483970f4b304db993434f7b3d8db, type: 3}
+  - name: portrait_big
+    sprite: {fileID: 21300000, guid: 0eae357b9e6444b4480bf9b025fa1a40, type: 3}
+  - name: badge_done
+    sprite: {fileID: 21300000, guid: e7d6d128db880734f96dca4afecae97f, type: 3}
+  - name: badge_todo
+    sprite: {fileID: 21300000, guid: 4aeaec33e371b6549b283296f547afa3, type: 3}
+  - name: tab_active
+    sprite: {fileID: 21300000, guid: 88c7a7c3515a1174d888ff9d2dc573e7, type: 3}
+  - name: tab_inactive
+    sprite: {fileID: 21300000, guid: 5049adb6d9a01154ca12e300f54a410c, type: 3}
+  - name: page
+    sprite: {fileID: 21300000, guid: 8357c520bfad9d14b8f2270e8548304f, type: 3}
+  - name: chip
+    sprite: {fileID: 21300000, guid: 7e3f7a5f1f3179b4dbfc7e69ed470a8c, type: 3}
+  - name: lesson_chip
+    sprite: {fileID: 21300000, guid: f6077e5aa76e2834299b8eb4efb9e064, type: 3}
+  - name: card_deep16
+    sprite: {fileID: 21300000, guid: 710896481e06e034b880f1df2377ed21, type: 3}
+  - name: book_deep
+    sprite: {fileID: 21300000, guid: 09bfd1ced827a564a9bf5eaf951f649e, type: 3}
+  - name: icon_back
+    sprite: {fileID: 21300000, guid: 821c809b04df4b54ab6c2ce6fc117b44, type: 3}
+  - name: icon_bomb
+    sprite: {fileID: 21300000, guid: 499d80fde322b2e4bb568396353ab300, type: 3}
+  - name: icon_cannon
+    sprite: {fileID: 21300000, guid: 70876ca6dc3633442b15d4c8404b197c, type: 3}
+  - name: icon_check
+    sprite: {fileID: 21300000, guid: 2ce37126dc8d9624882cce44eb321812, type: 3}
+  - name: icon_claw
+    sprite: {fileID: 21300000, guid: 2e31ad04bbd721f4eb90f4b03c3f9b84, type: 3}
+  - name: icon_close
+    sprite: {fileID: 21300000, guid: 6e81987e40e320e4984d7cfcc1d3a133, type: 3}
+  - name: icon_coin
+    sprite: {fileID: 21300000, guid: 1e012e293146dc044bc57df7ce7528db, type: 3}
+  - name: icon_leaf
+    sprite: {fileID: 21300000, guid: 068455a9826e1a34fb041ceddf587c08, type: 3}
+  - name: icon_lock
+    sprite: {fileID: 21300000, guid: ca9df8ffb8888d248b94ac2d1b0c8e4a, type: 3}
+  - name: icon_mountain
+    sprite: {fileID: 21300000, guid: f4637a6d6da7fd349bc0473256eba366, type: 3}
+  - name: icon_next
+    sprite: {fileID: 21300000, guid: ab37487cd880c23428cde6ac3c45d2c8, type: 3}
+  - name: icon_pause
+    sprite: {fileID: 21300000, guid: eb4676aea7022fe4db016677e5a362e1, type: 3}
+  - name: icon_question
+    sprite: {fileID: 21300000, guid: b3793711b17fa5b44b24e7295e40b78a, type: 3}
+  - name: icon_repeat
+    sprite: {fileID: 21300000, guid: 3e1f6c19176264f46b8f5f01a4199608, type: 3}
+  - name: icon_skull
+    sprite: {fileID: 21300000, guid: fb28e540118d6b346b0d2a3ffd26bbee, type: 3}
+  - name: icon_slow
+    sprite: {fileID: 21300000, guid: f0da8f50ea2721c45a0e3171f12755d6, type: 3}
+  - name: icon_triple
+    sprite: {fileID: 21300000, guid: dc2c200af4edf604985b75c942c6e6e2, type: 3}
+  - name: icon_water
+    sprite: {fileID: 21300000, guid: 79491ec078ab8844cb525a86daf7a48f, type: 3}
+  - name: branch_corner
+    sprite: {fileID: 21300000, guid: fcd97b234ef0ee3478a6a5917a9c3619, type: 3}
+  - name: branch_corner_bottom
+    sprite: {fileID: 21300000, guid: ae9dab35d79d35e44bf253c22a2dd8b5, type: 3}
+  - name: branch_corner_right
+    sprite: {fileID: 21300000, guid: 640b6c17ec7c9be4297051fc50565396, type: 3}
+  - name: corner
+    sprite: {fileID: 21300000, guid: 25f3d551218d5e6498244f5462bd1619, type: 3}
+  - name: emblem
+    sprite: {fileID: 21300000, guid: 6adb34386d3dd554da1b539b0dc6434c, type: 3}
+  - name: fireflies
+    sprite: {fileID: 21300000, guid: 4bba146526fa00f418598707aca3bc48, type: 3}
+  - name: forest_horizon
+    sprite: {fileID: 21300000, guid: 499a3fc5962e298499906b11e80d6cf3, type: 3}
+  - name: mushrooms
+    sprite: {fileID: 21300000, guid: ee67638ec09dede419b7cc68309e86bf, type: 3}
+  - name: owl
+    sprite: {fileID: 21300000, guid: a95d4355402722e4c852552dfa7b800b, type: 3}
+  - name: ribbon_tail_left
+    sprite: {fileID: 21300000, guid: c9c65d3dce8bef6488eaeabcd0a91376, type: 3}
+  - name: ribbon_tail_right
+    sprite: {fileID: 21300000, guid: ebd1f810904bcaa40b317fc0ff472344, type: 3}
+  - name: rivet
+    sprite: {fileID: 21300000, guid: 55aaeecb2c3cc0a489209f81fa028b99, type: 3}
+  - name: rivet_large
+    sprite: {fileID: 21300000, guid: ff9b6fadf2482b74ebe94d69daccb1c8, type: 3}
+  - name: roots
+    sprite: {fileID: 21300000, guid: cfed4a932def8a141806cd75edce7fb7, type: 3}
+  - name: runes
+    sprite: {fileID: 21300000, guid: 3c56168ab347141488bdef3276487612, type: 3}
+  - name: slot_empty
+    sprite: {fileID: 21300000, guid: 3466a1a61188a8d4281371b158b76b92, type: 3}
+  - name: slot_full
+    sprite: {fileID: 21300000, guid: b3642c6e537a7bf40894368a8ad6d008, type: 3}
+  - name: vine
+    sprite: {fileID: 21300000, guid: 2762e830aadbdf84ead07690a4ff4b22, type: 3}
+  fontBold: {fileID: 11400000, guid: b8aedcdbcebd1e043a6db7fb34341e3b, type: 2}
+  fontSemi: {fileID: 11400000, guid: e56ec82ae9738f04c9b34ba47bc2f9b6, type: 2}
+  fontTitle: {fileID: 11400000, guid: 19e45557149576541ae784369bcd959f, type: 2}
