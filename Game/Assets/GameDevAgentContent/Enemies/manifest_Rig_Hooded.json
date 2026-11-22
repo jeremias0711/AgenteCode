@@ -1,0 +1,50 @@
+{
+ "source": "C:\\Users\\jerem\\OneDrive\\Documentos\\GameDevAgent\\3D_Videojuego\\Rigging y animación-20261122T004316Z-1-001\\Rigging y animación\\Atacantes (TOWER DEFENSE)\\PERSONAJES ENEMIGOS_RIG_ANIM.blend",
+ "mode": "enemies",
+ "name": "Export",
+ "warnings": [],
+ "meshes": [
+  {
+   "name": "Hooded_Mesh",
+   "rig": "Rig_Hooded",
+   "tris_export": 2837,
+   "materials": [
+    "Material.002"
+   ]
+  }
+ ],
+ "textures": [
+  "Textures/Material_002_albedo.png",
+  "Textures/Material_002_normal.png",
+  "Textures/Material_002_ms.png"
+ ],
+ "materials": {
+  "Material.002": {
+   "albedo": "Textures/Material_002_albedo.png",
+   "normal": "Textures/Material_002_normal.png",
+   "ms": "Textures/Material_002_ms.png",
+   "cutout": false,
+   "color": [
+    0.800000011920929,
+    0.800000011920929,
+    0.800000011920929,
+    1.0
+   ]
+  }
+ },
+ "actions": [
+  {
+   "rig": "Rig_Hooded",
+   "name": "Rig_Hooded_GhostFloat_5s",
+   "frames": [
+    1.0,
+    121.0
+   ]
+  }
+ ],
+ "selected_for_export": [
+  "Rig_Hooded",
+  "Hooded_Mesh"
+ ],
+ "ok": true
+}

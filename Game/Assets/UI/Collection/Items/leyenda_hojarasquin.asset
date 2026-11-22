@@ -18,7 +18,8 @@ MonoBehaviour:
   subtitle: "guardi\xE1n del monte"
   lore: Ser del bosque cubierto de hojarasca y ramas. Protege a los animales y desorienta a los cazadores.
   icon: {fileID: 21300000, guid: 068455a9826e1a34fb041ceddf587c08, type: 3}
-  placeholderArt: 1
+  placeholderArt: 0
+  portrait: {fileID: 21300000, guid: 94b6c11fb6677314aab3019e5f59e290, type: 3}
   unlockRule: 2
   unlockLevelId: 0
   unlockHint: "llegar\xE1 en una pr\xF3xima actualizaci\xF3n"

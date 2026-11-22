@@ -1,0 +1,188 @@
+{
+ "source": "C:\\Users\\jerem\\OneDrive\\Documentos\\GameDevAgent\\3D_Videojuego\\Rigging y animación-20261122T004316Z-1-001\\Rigging y animación\\Mohán\\Tower Defense\\Acciones Tower Defense.blend",
+ "mode": "character",
+ "name": "Mohan",
+ "warnings": [
+  "Mohan_baja.003: removed COLLISION modifier (cloth proxy); keeps its bone weights",
+  "falda_low.003: removed SURFACE_DEFORM modifier (cloth proxy); keeps its bone weights",
+  "falda_low.003: removed SHRINKWRAP modifier (cloth proxy); keeps its bone weights"
+ ],
+ "meshes": [
+  {
+   "name": "Mohan_baja.003",
+   "tris_source": 16682,
+   "tris_export": 10008,
+   "ratio": 0.6,
+   "world_size_center": [
+    2.584,
+    4.8,
+    1.041,
+    0.029,
+    0.56,
+    0.484
+   ],
+   "materials": [
+    "Mohan_Body_MAT"
+   ]
+  },
+  {
+   "name": "dreadlocks.003",
+   "tris_source": 41808,
+   "tris_export": 5015,
+   "ratio": 0.12,
+   "world_size_center": [
+    0.966,
+    1.444,
+    0.943,
+    0.085,
+    2.091,
+    0.505
+   ],
+   "materials": [
+    "Dreadlocks_4K"
+   ]
+  },
+  {
+   "name": "falda_low.003",
+   "tris_source": 45620,
+   "tris_export": 5474,
+   "ratio": 0.12,
+   "world_size_center": [
+    1.382,
+    1.016,
+    2.0,
+    -0.038,
+    0.097,
+    2.05
+   ],
+   "materials": [
+    "Material"
+   ]
+  },
+  {
+   "name": "bara_low.003",
+   "tris_source": 29690,
+   "tris_export": 3562,
+   "ratio": 0.12,
+   "world_size_center": [
+    0.452,
+    1.008,
+    0.359,
+    0.073,
+    1.725,
+    0.892
+   ],
+   "materials": [
+    "Material.001"
+   ]
+  }
+ ],
+ "textures": [
+  "Textures/Mohan_Body_MAT_albedo.png",
+  "Textures/Mohan_Body_MAT_normal.png",
+  "Textures/Mohan_Body_MAT_ms.png",
+  "Textures/Dreadlocks_4K_albedo.png",
+  "Textures/Dreadlocks_4K_normal.png",
+  "Textures/Dreadlocks_4K_ms.png",
+  "Textures/Material_albedo.png",
+  "Textures/Material_normal.png",
+  "Textures/Material_ms.png",
+  "Textures/Material_001_albedo.png",
+  "Textures/Material_001_normal.png",
+  "Textures/Material_001_ms.png"
+ ],
+ "materials": {
+  "Mohan_Body_MAT": {
+   "albedo": "Textures/Mohan_Body_MAT_albedo.png",
+   "normal": "Textures/Mohan_Body_MAT_normal.png",
+   "ms": "Textures/Mohan_Body_MAT_ms.png",
+   "cutout": false,
+   "color": [
+    0.800000011920929,
+    0.800000011920929,
+    0.800000011920929,
+    1.0
+   ]
+  },
+  "Dreadlocks_4K": {
+   "albedo": "Textures/Dreadlocks_4K_albedo.png",
+   "normal": "Textures/Dreadlocks_4K_normal.png",
+   "ms": "Textures/Dreadlocks_4K_ms.png",
+   "cutout": true,
+   "color": [
+    0.800000011920929,
+    0.800000011920929,
+    0.800000011920929,
+    1.0
+   ]
+  },
+  "Material": {
+   "albedo": "Textures/Material_albedo.png",
+   "normal": "Textures/Material_normal.png",
+   "ms": "Textures/Material_ms.png",
+   "cutout": false,
+   "color": [
+    0.800000011920929,
+    0.800000011920929,
+    0.800000011920929,
+    1.0
+   ]
+  },
+  "Material.001": {
+   "albedo": "Textures/Material_001_albedo.png",
+   "normal": "Textures/Material_001_normal.png",
+   "ms": "Textures/Material_001_ms.png",
+   "cutout": false,
+   "color": [
+    0.800000011920929,
+    0.800000011920929,
+    0.800000011920929,
+    1.0
+   ]
+  }
+ },
+ "actions": [
+  {
+   "name": "TD_01_Espera",
+   "frames": [
+    1.0,
+    121.0
+   ]
+  },
+  {
+   "name": "TD_02_Ataque_Fisga",
+   "frames": [
+    1.0,
+    91.0
+   ]
+  },
+  {
+   "name": "TD_03_Recibir_Golpe",
+   "frames": [
+    1.0,
+    41.0
+   ]
+  },
+  {
+   "name": "TD_04_Caida",
+   "frames": [
+    1.0,
+    37.0
+   ]
+  }
+ ],
+ "armature": {
+  "name": "Mohan - Acciones Tower Defense",
+  "bones": 350,
+  "deform": 68
+ },
+ "fps": 30,
+ "selected_for_export": [
+  "Mohan - Acciones Tower Defense",
+  "Mohan_baja.003",
+  "dreadlocks.003",
+  "falda_low.003",
+  "bara_low.003"
+ ],
+ "ok": true
+}

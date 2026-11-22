@@ -699,13 +699,19 @@ namespace GameDevAgent.UiTools
             string key = card.name.ToLowerInvariant();
             string iconName = key.Contains("slow") ? "icon_slow" : key.Contains("bomb") ? "icon_bomb"
                 : key.Contains("triple") ? "icon_triple" : "icon_cannon";
-            string display = key.Contains("slow") ? "lenta" : key.Contains("bomb") ? "bomba"
-                : key.Contains("triple") ? "triple" : "cañón";
+            // Phase 11: the card shows the legend that represents the defender ("mohán", "madremonte"...).
+            LegendId legend = LegendRoster.TryGet(towerButton.towerToPlace, out LegendId found)
+                ? found : LegendRoster.FromTowerName(key);
+            string display = LegendRoster.CardName(legend);
 
             Image icon = Icon(card, "Icon", Sp(iconName), 28f * U, HudTheme.Contour);
             Center(icon.rectTransform, new Vector2(0f, 21f * U));
             TMP_Text name = Text(card, "Name", display, fontBold, 15f * U, HudTheme.Contour);
             name.alignment = TextAlignmentOptions.Center;
+            name.enableAutoSizing = true; // "hojarasquín" / "madremonte" fit the 88 px card
+            name.fontSizeMin = 10f * U;
+            name.fontSizeMax = 15f * U;
+            name.textWrappingMode = TextWrappingModes.NoWrap;
             Center(name.rectTransform, new Vector2(0f, -3.5f * U), new Vector2(88f * U, 17f * U));
 
             Transform cost = Child(card, "Cost", false) ?? NewChild(card, "Cost").transform;
@@ -820,7 +826,10 @@ namespace GameDevAgent.UiTools
             TMP_Text label = Text(panel, "Label", "MEJORAR DEFENSOR", fontSemi, 12f * U, HudTheme.Gold);
             label.characterSpacing = 10f;
             Ignore(label.gameObject);
-            Corner(label.rectTransform, new Vector2(0f, 1f), new Vector2(20f, -11f) * U, new Vector2(300f, 15f) * U);
+            Corner(label.rectTransform, new Vector2(0f, 1f), new Vector2(20f, -11f) * U, new Vector2(400f, 15f) * U);
+            TowerUpgradePanel upgradePanel = panel.GetComponentInParent<TowerUpgradePanel>(true)
+                ?? canvas.GetComponentInChildren<TowerUpgradePanel>(true);
+            if (upgradePanel != null) upgradePanel.titleText = label; // "MEJORAR · EL MOHÁN" at runtime
 
             Transform range = Child(panel, "Range Upgrade Button", true);
             Transform firerate = Child(panel, "Firerate Upgrade Button", true);

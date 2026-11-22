@@ -18,7 +18,8 @@ MonoBehaviour:
   subtitle: "guardi\xE1n de las aguas"
   lore: "Viejo sabio de los r\xEDos. En la tradici\xF3n del Tolima y el Huila vive en cuevas junto al agua y cuida de los peces y las corrientes."
   icon: {fileID: 21300000, guid: 79491ec078ab8844cb525a86daf7a48f, type: 3}
-  placeholderArt: 1
+  placeholderArt: 0
+  portrait: {fileID: 21300000, guid: 38beb637c50ea3349b52b5ad1a62fca1, type: 3}
   unlockRule: 2
   unlockLevelId: 0
   unlockHint: "llegar\xE1 en una pr\xF3xima actualizaci\xF3n"

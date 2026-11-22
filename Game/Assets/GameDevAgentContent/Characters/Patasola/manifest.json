@@ -1,0 +1,148 @@
+{
+ "source": "C:\\Users\\jerem\\OneDrive\\Documentos\\GameDevAgent\\3D_Videojuego\\Personajes-20261122T004255Z-1-001\\Personajes\\Patasola\\Patasola_finalVer\\Patasola_finalVer\\PatasolaFinalVer_Rig_Texturas.blend",
+ "mode": "static",
+ "name": "Patasola",
+ "warnings": [],
+ "meshes": [
+  {
+   "name": "Patasola",
+   "tris_source": 8416,
+   "tris_export": 8416,
+   "ratio": 1.0,
+   "world_size_center": [
+    0.564,
+    0.254,
+    1.159,
+    -0.003,
+    -0.01,
+    0.816
+   ],
+   "materials": [
+    "Material.002"
+   ]
+  },
+  {
+   "name": "Retopo_Pelo",
+   "tris_source": 15170,
+   "tris_export": 6823,
+   "ratio": 0.45,
+   "world_size_center": [
+    0.249,
+    0.214,
+    0.472,
+    -0.0,
+    0.052,
+    0.936
+   ],
+   "materials": [
+    "Material.001"
+   ]
+  },
+  {
+   "name": "Retopo_Top",
+   "tris_source": 9476,
+   "tris_export": 6632,
+   "ratio": 0.7,
+   "world_size_center": [
+    0.269,
+    0.179,
+    0.268,
+    -0.002,
+    0.013,
+    0.878
+   ],
+   "materials": [
+    "Material.003"
+   ]
+  },
+  {
+   "name": "Retopo_Falda",
+   "tris_source": 18606,
+   "tris_export": 7425,
+   "ratio": 0.4,
+   "world_size_center": [
+    0.545,
+    0.422,
+    0.468,
+    0.003,
+    0.002,
+    0.449
+   ],
+   "materials": [
+    "Material.004"
+   ]
+  }
+ ],
+ "textures": [
+  "Textures/Material_002_albedo.png",
+  "Textures/Material_002_normal.png",
+  "Textures/Material_002_ms.png",
+  "Textures/Material_001_albedo.png",
+  "Textures/Material_001_normal.png",
+  "Textures/Material_001_ms.png",
+  "Textures/Material_003_albedo.png",
+  "Textures/Material_003_normal.png",
+  "Textures/Material_003_ms.png",
+  "Textures/Material_004_albedo.png",
+  "Textures/Material_004_normal.png",
+  "Textures/Material_004_ms.png"
+ ],
+ "materials": {
+  "Material.002": {
+   "albedo": "Textures/Material_002_albedo.png",
+   "normal": "Textures/Material_002_normal.png",
+   "ms": "Textures/Material_002_ms.png",
+   "cutout": false,
+   "color": [
+    0.800000011920929,
+    0.800000011920929,
+    0.800000011920929,
+    1.0
+   ]
+  },
+  "Material.001": {
+   "albedo": "Textures/Material_001_albedo.png",
+   "normal": "Textures/Material_001_normal.png",
+   "ms": "Textures/Material_001_ms.png",
+   "cutout": false,
+   "color": [
+    0.800000011920929,
+    0.800000011920929,
+    0.800000011920929,
+    1.0
+   ]
+  },
+  "Material.003": {
+   "albedo": "Textures/Material_003_albedo.png",
+   "normal": "Textures/Material_003_normal.png",
+   "ms": "Textures/Material_003_ms.png",
+   "cutout": false,
+   "color": [
+    0.800000011920929,
+    0.800000011920929,
+    0.800000011920929,
+    1.0
+   ]
+  },
+  "Material.004": {
+   "albedo": "Textures/Material_004_albedo.png",
+   "normal": "Textures/Material_004_normal.png",
+   "ms": "Textures/Material_004_ms.png",
+   "cutout": false,
+   "color": [
+    0.800000011920929,
+    0.800000011920929,
+    0.800000011920929,
+    1.0
+   ]
+  }
+ },
+ "actions": [],
+ "selected_for_export": [
+  "Patasola",
+  "Retopo_Pelo",
+  "Retopo_Top",
+  "Retopo_Falda"
+ ],
+ "ok": true
+}

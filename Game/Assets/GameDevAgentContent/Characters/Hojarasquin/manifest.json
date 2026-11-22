@@ -1,0 +1,73 @@
+{
+ "source": "C:\\Users\\jerem\\OneDrive\\Documentos\\GameDevAgent\\3D_Videojuego\\Rigging y animación-20261122T004316Z-1-001\\Rigging y animación\\Hojarasquín\\Tower D\\Acciones Tower D. Hojaranquin.blend",
+ "mode": "character",
+ "name": "Hojarasquin",
+ "warnings": [],
+ "meshes": [
+  {
+   "name": "Hojarazquin",
+   "tris_source": 29824,
+   "tris_export": 14906,
+   "ratio": 0.5,
+   "materials": [
+    "Material"
+   ]
+  }
+ ],
+ "textures": [
+  "Textures/Material_albedo.png",
+  "Textures/Material_normal.png",
+  "Textures/Material_ms.png"
+ ],
+ "materials": {
+  "Material": {
+   "albedo": "Textures/Material_albedo.png",
+   "normal": "Textures/Material_normal.png",
+   "ms": "Textures/Material_ms.png",
+   "cutout": false,
+   "color": [
+    0.800000011920929,
+    0.800000011920929,
+    0.800000011920929,
+    1.0
+   ]
+  }
+ },
+ "actions": [
+  {
+   "name": "TD_01_Espera",
+   "frames": [
+    1.0,
+    121.0
+   ]
+  },
+  {
+   "name": "TD_02_Ataque_Fisga",
+   "frames": [
+    1.0,
+    91.0
+   ]
+  },
+  {
+   "name": "TD_03_Recibir_Golpe",
+   "frames": [
+    1.0,
+    41.0
+   ]
+  },
+  {
+   "name": "TD_04_Caida",
+   "frames": [
+    1.0,
+    37.0
+   ]
+  }
+ ],
+ "armature": {
+  "name": "Mohan - Acciones Tower Defense",
+  "bones": 350,
+  "deform": 68
+ },
+ "fps": 24,
+ "ok": true
+}

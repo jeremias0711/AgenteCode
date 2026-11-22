@@ -1,0 +1,50 @@
+{
+ "source": "C:\\Users\\jerem\\OneDrive\\Documentos\\GameDevAgent\\3D_Videojuego\\Rigging y animación-20261122T004316Z-1-001\\Rigging y animación\\Atacantes (TOWER DEFENSE)\\PERSONAJES ENEMIGOS_RIG_ANIM.blend",
+ "mode": "enemies",
+ "name": "Export",
+ "warnings": [],
+ "meshes": [
+  {
+   "name": "Horned_Mesh",
+   "rig": "Rig_Horned",
+   "tris_export": 3156,
+   "materials": [
+    "Material"
+   ]
+  }
+ ],
+ "textures": [
+  "Textures/Material_albedo.png",
+  "Textures/Material_normal.png",
+  "Textures/Material_ms.png"
+ ],
+ "materials": {
+  "Material": {
+   "albedo": "Textures/Material_albedo.png",
+   "normal": "Textures/Material_normal.png",
+   "ms": "Textures/Material_ms.png",
+   "cutout": false,
+   "color": [
+    0.800000011920929,
+    0.800000011920929,
+    0.800000011920929,
+    1.0
+   ]
+  }
+ },
+ "actions": [
+  {
+   "rig": "Rig_Horned",
+   "name": "Rig_Horned_GhostFloat_5s",
+   "frames": [
+    1.0,
+    121.0
+   ]
+  }
+ ],
+ "selected_for_export": [
+  "Rig_Horned",
+  "Horned_Mesh"
+ ],
+ "ok": true
+}

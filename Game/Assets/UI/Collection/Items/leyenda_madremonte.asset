@@ -18,7 +18,8 @@ MonoBehaviour:
   subtitle: "se\xF1ora de los montes"
   lore: "Guardiana de los bosques y las monta\xF1as, vestida de musgo y hojas. Castiga a quienes talan el monte o ensucian los r\xEDos."
   icon: {fileID: 21300000, guid: f4637a6d6da7fd349bc0473256eba366, type: 3}
-  placeholderArt: 1
+  placeholderArt: 0
+  portrait: {fileID: 21300000, guid: dd4f8e7de2f3d62448816e051a784576, type: 3}
   unlockRule: 2
   unlockLevelId: 0
   unlockHint: "llegar\xE1 en una pr\xF3xima actualizaci\xF3n"

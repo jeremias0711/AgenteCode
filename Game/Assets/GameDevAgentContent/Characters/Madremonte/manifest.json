@@ -1,0 +1,125 @@
+{
+ "source": "C:\\Users\\jerem\\OneDrive\\Documentos\\GameDevAgent\\3D_Videojuego\\Rigging y animación-20261122T004316Z-1-001\\Rigging y animación\\MadreMonte\\Tower Defense\\TowerDefense_MadreMonte.blend",
+ "mode": "character",
+ "name": "Madremonte",
+ "warnings": [],
+ "meshes": [
+  {
+   "name": "mujer_baja",
+   "tris_source": 12916,
+   "tris_export": 10332,
+   "ratio": 0.8,
+   "materials": [
+    "Material"
+   ]
+  },
+  {
+   "name": "pelo",
+   "tris_source": 55707,
+   "tris_export": 8355,
+   "ratio": 0.15,
+   "materials": [
+    "Pelo_Material"
+   ]
+  }
+ ],
+ "textures": [
+  "Textures/Material_albedo.png",
+  "Textures/Material_normal.png",
+  "Textures/Material_ms.png",
+  "Textures/Pelo_Material_albedo.png",
+  "Textures/Pelo_Material_normal.png",
+  "Textures/Pelo_Material_ms.png"
+ ],
+ "materials": {
+  "Material": {
+   "albedo": "Textures/Material_albedo.png",
+   "normal": "Textures/Material_normal.png",
+   "ms": "Textures/Material_ms.png",
+   "cutout": false,
+   "color": [
+    0.800000011920929,
+    0.800000011920929,
+    0.800000011920929,
+    1.0
+   ]
+  },
+  "Pelo_Material": {
+   "albedo": "Textures/Pelo_Material_albedo.png",
+   "normal": "Textures/Pelo_Material_normal.png",
+   "ms": "Textures/Pelo_Material_ms.png",
+   "cutout": false,
+   "color": [
+    0.800000011920929,
+    0.800000011920929,
+    0.800000011920929,
+    1.0
+   ]
+  }
+ },
+ "actions": [
+  {
+   "name": "MadreMonte_TD_Aparecer",
+   "frames": [
+    1.0,
+    48.0
+   ]
+  },
+  {
+   "name": "MadreMonte_TD_Ataque_Cuerpo",
+   "frames": [
+    1.0,
+    34.0
+   ]
+  },
+  {
+   "name": "MadreMonte_TD_Ataque_Distancia",
+   "frames": [
+    1.0,
+    34.0
+   ]
+  },
+  {
+   "name": "MadreMonte_TD_Caminar",
+   "frames": [
+    1.0,
+    37.0
+   ]
+  },
+  {
+   "name": "MadreMonte_TD_Habilidad",
+   "frames": [
+    1.0,
+    50.0
+   ]
+  },
+  {
+   "name": "MadreMonte_TD_Idle",
+   "frames": [
+    1.0,
+    151.0
+   ]
+  },
+  {
+   "name": "MadreMonte_TD_Muerte",
+   "frames": [
+    1.0,
+    56.0
+   ]
+  },
+  {
+   "name": "MadreMonte_TD_Recibir_Golpe",
+   "frames": [
+    1.0,
+    22.0
+   ]
+  }
+ ],
+ "armature": {
+  "name": "rig",
+  "bones": 350,
+  "deform": 68
+ },
+ "fps": 30,
+ "ok": true
+}

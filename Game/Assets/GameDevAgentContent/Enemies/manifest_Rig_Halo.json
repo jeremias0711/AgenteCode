@@ -1,0 +1,50 @@
+{
+ "source": "C:\\Users\\jerem\\OneDrive\\Documentos\\GameDevAgent\\3D_Videojuego\\Rigging y animación-20261122T004316Z-1-001\\Rigging y animación\\Atacantes (TOWER DEFENSE)\\PERSONAJES ENEMIGOS_RIG_ANIM.blend",
+ "mode": "enemies",
+ "name": "Export",
+ "warnings": [],
+ "meshes": [
+  {
+   "name": "Halo_Mesh",
+   "rig": "Rig_Halo",
+   "tris_export": 2996,
+   "materials": [
+    "Material.001"
+   ]
+  }
+ ],
+ "textures": [
+  "Textures/Material_001_albedo.png",
+  "Textures/Material_001_normal.png",
+  "Textures/Material_001_ms.png"
+ ],
+ "materials": {
+  "Material.001": {
+   "albedo": "Textures/Material_001_albedo.png",
+   "normal": "Textures/Material_001_normal.png",
+   "ms": "Textures/Material_001_ms.png",
+   "cutout": false,
+   "color": [
+    0.800000011920929,
+    0.800000011920929,
+    0.800000011920929,
+    1.0
+   ]
+  }
+ },
+ "actions": [
+  {
+   "rig": "Rig_Halo",
+   "name": "Rig_Halo_GhostFloat_5s",
+   "frames": [
+    1.0,
+    121.0
+   ]
+  }
+ ],
+ "selected_for_export": [
+  "Rig_Halo",
+  "Halo_Mesh"
+ ],
+ "ok": true
+}

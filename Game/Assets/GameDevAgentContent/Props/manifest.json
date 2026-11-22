@@ -1,0 +1,742 @@
+{
+ "source": "C:\\Users\\jerem\\OneDrive\\Documentos\\GameDevAgent\\3D_Videojuego\\Tower Defense-20261122T004242Z-1-001\\Tower Defense\\PROPS TOWER DEFENSE.blend",
+ "mode": "props",
+ "name": "TD_Props",
+ "warnings": [],
+ "meshes": [
+  {
+   "name": "Rocas",
+   "source_object": "Retopo_Mesh_0.012",
+   "tris_export": 624,
+   "dims": [
+    1.663,
+    1.725,
+    1.902
+   ],
+   "materials": [
+    "Rocas_Baked"
+   ]
+  },
+  {
+   "name": "Poste",
+   "source_object": "Retopo_Mesh_0.010",
+   "tris_export": 640,
+   "dims": [
+    0.554,
+    0.553,
+    1.902
+   ],
+   "materials": [
+    "Poste_Baked"
+   ]
+  },
+  {
+   "name": "Pedestal",
+   "source_object": "Retopo_Mesh_0.001",
+   "tris_export": 735,
+   "dims": [
+    0.983,
+    0.979,
+    1.904
+   ],
+   "materials": [
+    "Pedestal_Baked"
+   ]
+  },
+  {
+   "name": "Planta",
+   "source_object": "Retopo_Mesh_0.002",
+   "tris_export": 1254,
+   "dims": [
+    1.901,
+    1.525,
+    1.337
+   ],
+   "materials": [
+    "Planta_Baked"
+   ]
+  },
+  {
+   "name": "Rocas2",
+   "source_object": "Retopo_Mesh_0.003",
+   "tris_export": 2455,
+   "dims": [
+    1.671,
+    1.891,
+    1.211
+   ],
+   "materials": [
+    "Rocas2_Baked"
+   ]
+  },
+  {
+   "name": "Roca3",
+   "source_object": "Retopo_Mesh_0.005",
+   "tris_export": 1160,
+   "dims": [
+    1.386,
+    0.926,
+    1.903
+   ],
+   "materials": [
+    "Roca3_Baked"
+   ]
+  },
+  {
+   "name": "Losa",
+   "source_object": "Retopo_Mesh_0.006",
+   "tris_export": 563,
+   "dims": [
+    1.839,
+    1.897,
+    0.387
+   ],
+   "materials": [
+    "Losa_Baked"
+   ]
+  },
+  {
+   "name": "Piso",
+   "source_object": "Retopo_Mesh_0.004",
+   "tris_export": 293,
+   "dims": [
+    1.912,
+    1.616,
+    0.058
+   ],
+   "materials": [
+    "Piso_Baked"
+   ]
+  },
+  {
+   "name": "Pilar",
+   "source_object": "Retopo_Mesh_0.007",
+   "tris_export": 268,
+   "dims": [
+    0.631,
+    0.525,
+    1.902
+   ],
+   "materials": [
+    "Pilar_Baked"
+   ]
+  },
+  {
+   "name": "Muro",
+   "source_object": "Retopo_Mesh_0.009",
+   "tris_export": 1146,
+   "dims": [
+    1.897,
+    0.325,
+    1.202
+   ],
+   "materials": [
+    "Muro_Baked"
+   ]
+  },
+  {
+   "name": "Hongos",
+   "source_object": "Retopo_Mesh_0.011",
+   "tris_export": 1778,
+   "dims": [
+    1.281,
+    0.973,
+    1.905
+   ],
+   "materials": [
+    "Hongos_Baked"
+   ]
+  },
+  {
+   "name": "Base",
+   "source_object": "Retopo_Base.001",
+   "tris_export": 918,
+   "dims": [
+    1.893,
+    1.888,
+    0.424
+   ],
+   "materials": [
+    "Base_Baked.001"
+   ]
+  },
+  {
+   "name": "Libro",
+   "source_object": "Retopo_Libro.001",
+   "tris_export": 1357,
+   "dims": [
+    1.188,
+    1.241,
+    1.154
+   ],
+   "materials": [
+    "Libro_Baked"
+   ]
+  },
+  {
+   "name": "Portal",
+   "source_object": "Retopo_Mesh_0.013",
+   "tris_export": 1280,
+   "dims": [
+    1.417,
+    1.411,
+    1.899
+   ],
+   "materials": [
+    "Portal_Baked"
+   ]
+  },
+  {
+   "name": "Muro_2",
+   "source_object": "Muro_retopo.001",
+   "tris_export": 844,
+   "dims": [
+    1.837,
+    0.62,
+    1.841
+   ],
+   "materials": [
+    "Mat_Muro_retopo"
+   ]
+  },
+  {
+   "name": "Arbol",
+   "source_object": "Arbol_retopo.001",
+   "tris_export": 904,
+   "dims": [
+    1.723,
+    1.265,
+    1.062
+   ],
+   "materials": [
+    "Mat_Arbol_retopo"
+   ]
+  },
+  {
+   "name": "Arco",
+   "source_object": "Arco_retopo.001",
+   "tris_export": 645,
+   "dims": [
+    1.578,
+    0.562,
+    1.895
+   ],
+   "materials": [
+    "Mat_Arco_retopo"
+   ]
+  },
+  {
+   "name": "Puesto2",
+   "source_object": "Retopo_Mesh_0.008",
+   "tris_export": 1356,
+   "dims": [
+    1.815,
+    1.224,
+    1.892
+   ],
+   "materials": [
+    "Puesto2_Baked"
+   ]
+  },
+  {
+   "name": "Prop5",
+   "source_object": "Retopo_Mesh_0.014",
+   "tris_export": 1141,
+   "dims": [
+    1.893,
+    1.748,
+    0.533
+   ],
+   "materials": [
+    "Prop5_Baked"
+   ]
+  },
+  {
+   "name": "Puesto",
+   "source_object": "Retopo_Mesh_0.016",
+   "tris_export": 1391,
+   "dims": [
+    1.623,
+    1.316,
+    1.904
+   ],
+   "materials": [
+    "Puesto_Baked"
+   ]
+  },
+  {
+   "name": "Retopo",
+   "source_object": "Retopo_Mesh_0.017",
+   "tris_export": 993,
+   "dims": [
+    1.904,
+    1.905,
+    1.338
+   ],
+   "materials": [
+    "Retopo_Baked"
+   ]
+  },
+  {
+   "name": "Tronco",
+   "source_object": "Retopo_Mesh_0.018",
+   "tris_export": 795,
+   "dims": [
+    0.904,
+    0.918,
+    1.872
+   ],
+   "materials": [
+    "Tronco_Baked"
+   ]
+  },
+  {
+   "name": "Terreno",
+   "source_object": "Retopo_Mesh_0.019",
+   "tris_export": 2847,
+   "dims": [
+    1.85,
+    0.197,
+    1.818
+   ],
+   "materials": [
+    "Terreno_Baked"
+   ]
+  },
+  {
+   "name": "Arbol2",
+   "source_object": "Retopo_Mesh_0.020",
+   "tris_export": 2187,
+   "dims": [
+    1.423,
+    0.955,
+    1.899
+   ],
+   "materials": [
+    "Arbol2_Baked"
+   ]
+  },
+  {
+   "name": "Arbol_2",
+   "source_object": "Retopo_Mesh_0.021",
+   "tris_export": 1124,
+   "dims": [
+    1.392,
+    0.749,
+    1.9
+   ],
+   "materials": [
+    "Arbol_Baked"
+   ]
+  },
+  {
+   "name": "TerrenoIsla",
+   "source_object": "Retopo_node_0.001",
+   "tris_export": 1126,
+   "dims": [
+    8.624,
+    9.274,
+    1.345
+   ],
+   "materials": [
+    "Material_retopo"
+   ]
+  }
+ ],
+ "textures": [
+  "Textures/Rocas_Baked_albedo.png",
+  "Textures/Rocas_Baked_normal.png",
+  "Textures/Rocas_Baked_ms.png",
+  "Textures/Poste_Baked_albedo.png",
+  "Textures/Poste_Baked_normal.png",
+  "Textures/Poste_Baked_ms.png",
+  "Textures/Pedestal_Baked_albedo.png",
+  "Textures/Pedestal_Baked_normal.png",
+  "Textures/Pedestal_Baked_ms.png",
+  "Textures/Planta_Baked_albedo.png",
+  "Textures/Planta_Baked_normal.png",
+  "Textures/Planta_Baked_ms.png",
+  "Textures/Rocas2_Baked_albedo.png",
+  "Textures/Rocas2_Baked_normal.png",
+  "Textures/Rocas2_Baked_ms.png",
+  "Textures/Roca3_Baked_albedo.png",
+  "Textures/Roca3_Baked_normal.png",
+  "Textures/Roca3_Baked_ms.png",
+  "Textures/Losa_Baked_albedo.png",
+  "Textures/Losa_Baked_normal.png",
+  "Textures/Losa_Baked_ms.png",
+  "Textures/Piso_Baked_albedo.png",
+  "Textures/Piso_Baked_normal.png",
+  "Textures/Piso_Baked_ms.png",
+  "Textures/Pilar_Baked_albedo.png",
+  "Textures/Pilar_Baked_normal.png",
+  "Textures/Pilar_Baked_ms.png",
+  "Textures/Muro_Baked_albedo.png",
+  "Textures/Muro_Baked_normal.png",
+  "Textures/Muro_Baked_ms.png",
+  "Textures/Hongos_Baked_albedo.png",
+  "Textures/Hongos_Baked_normal.png",
+  "Textures/Hongos_Baked_ms.png",
+  "Textures/Base_Baked_001_albedo.png",
+  "Textures/Base_Baked_001_normal.png",
+  "Textures/Base_Baked_001_ms.png",
+  "Textures/Libro_Baked_albedo.png",
+  "Textures/Libro_Baked_normal.png",
+  "Textures/Libro_Baked_ms.png",
+  "Textures/Portal_Baked_albedo.png",
+  "Textures/Portal_Baked_normal.png",
+  "Textures/Portal_Baked_ms.png",
+  "Textures/Mat_Muro_retopo_albedo.png",
+  "Textures/Mat_Muro_retopo_normal.png",
+  "Textures/Mat_Muro_retopo_ms.png",
+  "Textures/Mat_Arbol_retopo_albedo.png",
+  "Textures/Mat_Arbol_retopo_normal.png",
+  "Textures/Mat_Arbol_retopo_ms.png",
+  "Textures/Mat_Arco_retopo_albedo.png",
+  "Textures/Mat_Arco_retopo_normal.png",
+  "Textures/Mat_Arco_retopo_ms.png",
+  "Textures/Puesto2_Baked_albedo.png",
+  "Textures/Puesto2_Baked_normal.png",
+  "Textures/Puesto2_Baked_ms.png",
+  "Textures/Prop5_Baked_albedo.png",
+  "Textures/Prop5_Baked_normal.png",
+  "Textures/Prop5_Baked_ms.png",
+  "Textures/Puesto_Baked_albedo.png",
+  "Textures/Puesto_Baked_normal.png",
+  "Textures/Puesto_Baked_ms.png",
+  "Textures/Retopo_Baked_albedo.png",
+  "Textures/Retopo_Baked_normal.png",
+  "Textures/Retopo_Baked_ms.png",
+  "Textures/Tronco_Baked_albedo.png",
+  "Textures/Tronco_Baked_normal.png",
+  "Textures/Tronco_Baked_ms.png",
+  "Textures/Terreno_Baked_albedo.png",
+  "Textures/Terreno_Baked_normal.png",
+  "Textures/Terreno_Baked_ms.png",
+  "Textures/Arbol2_Baked_albedo.png",
+  "Textures/Arbol2_Baked_normal.png",
+  "Textures/Arbol2_Baked_ms.png",
+  "Textures/Arbol_Baked_albedo.png",
+  "Textures/Arbol_Baked_normal.png",
+  "Textures/Arbol_Baked_ms.png",
+  "Textures/Material_retopo_albedo.png",
+  "Textures/Material_retopo_normal.png",
+  "Textures/Material_retopo_ms.png"
+ ],
+ "materials": {
+  "Rocas_Baked": {
+   "albedo": "Textures/Rocas_Baked_albedo.png",
+   "normal": "Textures/Rocas_Baked_normal.png",
+   "ms": "Textures/Rocas_Baked_ms.png",
+   "cutout": false,
+   "color": [
+    0.800000011920929,
+    0.800000011920929,
+    0.800000011920929,
+    1.0
+   ]
+  },
+  "Poste_Baked": {
+   "albedo": "Textures/Poste_Baked_albedo.png",
+   "normal": "Textures/Poste_Baked_normal.png",
+   "ms": "Textures/Poste_Baked_ms.png",
+   "cutout": false,
+   "color": [
+    0.800000011920929,
+    0.800000011920929,
+    0.800000011920929,
+    1.0
+   ]
+  },
+  "Pedestal_Baked": {
+   "albedo": "Textures/Pedestal_Baked_albedo.png",
+   "normal": "Textures/Pedestal_Baked_normal.png",
+   "ms": "Textures/Pedestal_Baked_ms.png",
+   "cutout": false,
+   "color": [
+    0.800000011920929,
+    0.800000011920929,
+    0.800000011920929,
+    1.0
+   ]
+  },
+  "Planta_Baked": {
+   "albedo": "Textures/Planta_Baked_albedo.png",
+   "normal": "Textures/Planta_Baked_normal.png",
+   "ms": "Textures/Planta_Baked_ms.png",
+   "cutout": false,
+   "color": [
+    0.800000011920929,
+    0.800000011920929,
+    0.800000011920929,
+    1.0
+   ]
+  },
+  "Rocas2_Baked": {
+   "albedo": "Textures/Rocas2_Baked_albedo.png",
+   "normal": "Textures/Rocas2_Baked_normal.png",
+   "ms": "Textures/Rocas2_Baked_ms.png",
+   "cutout": false,
+   "color": [
+    0.800000011920929,
+    0.800000011920929,
+    0.800000011920929,
+    1.0
+   ]
+  },
+  "Roca3_Baked": {
+   "albedo": "Textures/Roca3_Baked_albedo.png",
+   "normal": "Textures/Roca3_Baked_normal.png",
+   "ms": "Textures/Roca3_Baked_ms.png",
+   "cutout": false,
+   "color": [
+    0.800000011920929,
+    0.800000011920929,
+    0.800000011920929,
+    1.0
+   ]
+  },
+  "Losa_Baked": {
+   "albedo": "Textures/Losa_Baked_albedo.png",
+   "normal": "Textures/Losa_Baked_normal.png",
+   "ms": "Textures/Losa_Baked_ms.png",
+   "cutout": false,
+   "color": [
+    0.800000011920929,
+    0.800000011920929,
+    0.800000011920929,
+    1.0
+   ]
+  },
+  "Piso_Baked": {
+   "albedo": "Textures/Piso_Baked_albedo.png",
+   "normal": "Textures/Piso_Baked_normal.png",
+   "ms": "Textures/Piso_Baked_ms.png",
+   "cutout": false,
+   "color": [
+    0.800000011920929,
+    0.800000011920929,
+    0.800000011920929,
+    1.0
+   ]
+  },
+  "Pilar_Baked": {
+   "albedo": "Textures/Pilar_Baked_albedo.png",
+   "normal": "Textures/Pilar_Baked_normal.png",
+   "ms": "Textures/Pilar_Baked_ms.png",
+   "cutout": false,
+   "color": [
+    0.800000011920929,
+    0.800000011920929,
+    0.800000011920929,
+    1.0
+   ]
+  },
+  "Muro_Baked": {
+   "albedo": "Textures/Muro_Baked_albedo.png",
+   "normal": "Textures/Muro_Baked_normal.png",
+   "ms": "Textures/Muro_Baked_ms.png",
+   "cutout": false,
+   "color": [
+    0.800000011920929,
+    0.800000011920929,
+    0.800000011920929,
+    1.0
+   ]
+  },
+  "Hongos_Baked": {
+   "albedo": "Textures/Hongos_Baked_albedo.png",
+   "normal": "Textures/Hongos_Baked_normal.png",
+   "ms": "Textures/Hongos_Baked_ms.png",
+   "cutout": false,
+   "color": [
+    0.800000011920929,
+    0.800000011920929,
+    0.800000011920929,
+    1.0
+   ]
+  },
+  "Base_Baked.001": {
+   "albedo": "Textures/Base_Baked_001_albedo.png",
+   "normal": "Textures/Base_Baked_001_normal.png",
+   "ms": "Textures/Base_Baked_001_ms.png",
+   "cutout": false,
+   "color": [
+    0.800000011920929,
+    0.800000011920929,
+    0.800000011920929,
+    1.0
+   ]
+  },
+  "Libro_Baked": {
+   "albedo": "Textures/Libro_Baked_albedo.png",
+   "normal": "Textures/Libro_Baked_normal.png",
+   "ms": "Textures/Libro_Baked_ms.png",
+   "cutout": false,
+   "color": [
+    0.800000011920929,
+    0.800000011920929,
+    0.800000011920929,
+    1.0
+   ]
+  },
+  "Portal_Baked": {
+   "albedo": "Textures/Portal_Baked_albedo.png",
+   "normal": "Textures/Portal_Baked_normal.png",
+   "ms": "Textures/Portal_Baked_ms.png",
+   "cutout": false,
+   "color": [
+    0.800000011920929,
+    0.800000011920929,
+    0.800000011920929,
+    1.0
+   ]
+  },
+  "Mat_Muro_retopo": {
+   "albedo": "Textures/Mat_Muro_retopo_albedo.png",
+   "normal": "Textures/Mat_Muro_retopo_normal.png",
+   "ms": "Textures/Mat_Muro_retopo_ms.png",
+   "cutout": false,
+   "color": [
+    0.800000011920929,
+    0.800000011920929,
+    0.800000011920929,
+    1.0
+   ]
+  },
+  "Mat_Arbol_retopo": {
+   "albedo": "Textures/Mat_Arbol_retopo_albedo.png",
+   "normal": "Textures/Mat_Arbol_retopo_normal.png",
+   "ms": "Textures/Mat_Arbol_retopo_ms.png",
+   "cutout": false,
+   "color": [
+    0.800000011920929,
+    0.800000011920929,
+    0.800000011920929,
+    1.0
+   ]
+  },
+  "Mat_Arco_retopo": {
+   "albedo": "Textures/Mat_Arco_retopo_albedo.png",
+   "normal": "Textures/Mat_Arco_retopo_normal.png",
+   "ms": "Textures/Mat_Arco_retopo_ms.png",
+   "cutout": false,
+   "color": [
+    0.800000011920929,
+    0.800000011920929,
+    0.800000011920929,
+    1.0
+   ]
+  },
+  "Puesto2_Baked": {
+   "albedo": "Textures/Puesto2_Baked_albedo.png",
+   "normal": "Textures/Puesto2_Baked_normal.png",
+   "ms": "Textures/Puesto2_Baked_ms.png",
+   "cutout": false,
+   "color": [
+    0.800000011920929,
+    0.800000011920929,
+    0.800000011920929,
+    1.0
+   ]
+  },
+  "Prop5_Baked": {
+   "albedo": "Textures/Prop5_Baked_albedo.png",
+   "normal": "Textures/Prop5_Baked_normal.png",
+   "ms": "Textures/Prop5_Baked_ms.png",
+   "cutout": false,
+   "color": [
+    0.800000011920929,
+    0.800000011920929,
+    0.800000011920929,
+    1.0
+   ]
+  },
+  "Puesto_Baked": {
+   "albedo": "Textures/Puesto_Baked_albedo.png",
+   "normal": "Textures/Puesto_Baked_normal.png",
+   "ms": "Textures/Puesto_Baked_ms.png",
+   "cutout": false,
+   "color": [
+    0.800000011920929,
+    0.800000011920929,
+    0.800000011920929,
+    1.0
+   ]
+  },
+  "Retopo_Baked": {
+   "albedo": "Textures/Retopo_Baked_albedo.png",
+   "normal": "Textures/Retopo_Baked_normal.png",
+   "ms": "Textures/Retopo_Baked_ms.png",
+   "cutout": false,
+   "color": [
+    0.800000011920929,
+    0.800000011920929,
+    0.800000011920929,
+    1.0
+   ]
+  },
+  "Tronco_Baked": {
+   "albedo": "Textures/Tronco_Baked_albedo.png",
+   "normal": "Textures/Tronco_Baked_normal.png",
+   "ms": "Textures/Tronco_Baked_ms.png",
+   "cutout": false,
+   "color": [
+    0.800000011920929,
+    0.800000011920929,
+    0.800000011920929,
+    1.0
+   ]
+  },
+  "Terreno_Baked": {
+   "albedo": "Textures/Terreno_Baked_albedo.png",
+   "normal": "Textures/Terreno_Baked_normal.png",
+   "ms": "Textures/Terreno_Baked_ms.png",
+   "cutout": false,
+   "color": [
+    0.800000011920929,
+    0.800000011920929,
+    0.800000011920929,
+    1.0
+   ]
+  },
+  "Arbol2_Baked": {
+   "albedo": "Textures/Arbol2_Baked_albedo.png",
+   "normal": "Textures/Arbol2_Baked_normal.png",
+   "ms": "Textures/Arbol2_Baked_ms.png",
+   "cutout": false,
+   "color": [
+    0.800000011920929,
+    0.800000011920929,
+    0.800000011920929,
+    1.0
+   ]
+  },
+  "Arbol_Baked": {
+   "albedo": "Textures/Arbol_Baked_albedo.png",
+   "normal": "Textures/Arbol_Baked_normal.png",
+   "ms": "Textures/Arbol_Baked_ms.png",
+   "cutout": false,
+   "color": [
+    0.800000011920929,
+    0.800000011920929,
+    0.800000011920929,
+    1.0
+   ]
+  },
+  "Material_retopo": {
+   "albedo": "Textures/Material_retopo_albedo.png",
+   "normal": "Textures/Material_retopo_normal.png",
+   "ms": "Textures/Material_retopo_ms.png",
+   "cutout": false,
+   "color": [
+    0.800000011920929,
+    0.800000011920929,
+    0.800000011920929,
+    1.0
+   ]
+  }
+ },
+ "actions": [],
+ "ok": true
+}
