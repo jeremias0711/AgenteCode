@@ -2565,6 +2565,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2977613313749145242}
   - component: {fileID: 6212152679231027677}
+  - component: {fileID: 8394873521796689886}
   m_Layer: 0
   m_Name: HojarasquinRockProjectile
   m_TagString: Untagged
@@ -2610,6 +2611,22 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 64
   explodeRange: 1.75
+--- !u!114 &8394873521796689886
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3027297701645465936}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5fb0a1597f8982c4aad547a25e30b734, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ProjectileAudio
+  launch: 15
+  impact: 16
+  launchVolume: 1
+  impactVolume: 1
 --- !u!1 &8483996163479889060
 GameObject:
   m_ObjectHideFlags: 0

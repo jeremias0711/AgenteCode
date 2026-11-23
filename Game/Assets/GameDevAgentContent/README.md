@@ -13,6 +13,7 @@ Recursos derivados de las carpetas elegibles «Tower Defense» / «Tower D» de 
 | `Props` | 26 props y el Libro Sagrado (texturas 512 px) | `Tower Defense/PROPS TOWER DEFENSE.blend` |
 | `Escenarios` | Fase 12: texturas de suelo/losas y FBX de la plaza del Libro del paquete «Niveles campaña e Infinito»; materiales Standard y cintas de camino generadas | paquete externo (subconjunto) + `MapRestyleBuilder` |
 | `Projectiles` | Fase 14: proyectiles 3D originales generados por código (mallas low-poly facetadas, una paleta compartida de 16 colores y un único material). `MohanEmberProjectile` (carbón con grietas incandescentes + estela), `HojarasquinRockProjectile` (roca + estela de polvo; impacto con polvo y fragmentos visuales), `PatasolaBoomerangLegProjectile` (tres piernas estilizadas que giran como búmeran). Son copias de los prefabs del curso con su lógica intacta; los originales no se tocan | `ProjectileContentBuilder` |
+| `Audio` | Diseño sonoro: `Music/` (dos bucles sin costura), `Sfx/` (leyendas, viento, interfaz, victoria/derrota) y `SoundLibrary.asset` (clips, volúmenes, voces y tono, editable en el Inspector). Editados con ffmpeg desde la carpeta de referencia `Sonido/` (originales intactos) o sintetizados | `AudioContentBuilder` + ffmpeg |
 | `Animations` | Animator Controllers (Idle, Attack, Hit, Death y Spawn, según existan) | generado |
 | `Prefabs` | `Legend_*`, `Ghost_*`, `LibroSagrado` | generado |
 | `Portraits` | Retratos de la Colección renderizados desde los modelos | generado |
@@ -31,4 +32,5 @@ Recursos derivados de las carpetas elegibles «Tower Defense» / «Tower D» de 
 4. Pruebas: `CourseLevelFlowSmokeTest -gdaFlow legends` (F14) y `-gdaFlow maps` (F15).
 5. Solo La Patasola (fase 13.1; no toca otras leyendas ni mapas, y rehace las apariencias de la Colección):
    `-executeMethod GameDevAgent.ContentTools.LegendContentBuilder.BuildPatasolaFromCommandLine [-gdaShots <carpeta>]`; prueba `-gdaFlow patasola` (F21).
+7. Sonido: `-executeMethod GameDevAgent.ContentTools.AudioContentBuilder.BuildFromCommandLine` (importación, biblioteca, GameAudio en el Audio Manager y viento de la Madremonte); prueba `-gdaFlow audio` (F23). Volúmenes por código: `AudioSettingsStore.Master/Music/Sfx` (0..1, guardados en PlayerPrefs).
 6. Proyectiles (fase 14): `-executeMethod GameDevAgent.ContentTools.ProjectileContentBuilder.BuildFromCommandLine [-gdaShots <carpeta>]`; prueba `-gdaFlow projectiles` (F22, comparación directa con los proyectiles del curso).

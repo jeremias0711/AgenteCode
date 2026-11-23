@@ -79,7 +79,9 @@ namespace GameDevAgent.ContentTools
                 Mesh ember = SaveMesh(BuildEmber(), "Ember");
                 Mesh rock = SaveMesh(BuildRock(0.21f, 1, 0.24f, 11), "Rock");
                 Mesh chip = SaveMesh(BuildRock(0.06f, 0, 0.3f, 23), "RockChip");
-                Mesh leg = SaveMesh(BuildLeg(), "BoomerangLeg");
+                // Phase 14.1: the leg is cut from La Patasola's own body mesh and keeps her original materials
+                // (body + skirt cloth wrap). The phase 14 palette leg (BuildLeg) rendered almost white.
+                Mesh leg = SaveMesh(ExtractPatasolaLeg(out Material[] legMaterials), "PatasolaLeg");
 
                 GameObject emberImpact = BuildEmberImpact();
                 GameObject rockImpact = BuildRockImpact(chip, shared, dustTrail);
@@ -88,9 +90,10 @@ namespace GameDevAgent.ContentTools
                 {
                     foreach (Projectile p in root.GetComponentsInChildren<Projectile>(true))
                     {
-                        ReplaceVisual(p.transform, ember, shared, new Vector3(0.35f, 1f, 0.2f), 260f);
+                        ReplaceVisual(p.transform, ember, new[] { shared }, new Vector3(0.35f, 1f, 0.2f), 260f);
                         p.impactEffect = emberImpact;
                         AddTrail(p.transform, emberTrail, 0.16f, 0.13f, new Color(1f, 0.55f, 0.12f, 0.9f), new Color(1f, 0.2f, 0.05f, 0f));
+                        AddAudio(p.gameObject, SoundId.EmberLaunch, SoundId.EmberImpact, 1f);
                     }
                     root.AddComponent<ProjectileLifetime>().seconds = LifetimeSeconds;
                 });
@@ -98,10 +101,12 @@ namespace GameDevAgent.ContentTools
                 {
                     foreach (Projectile p in root.GetComponentsInChildren<Projectile>(true))
                     {
-                        ReplaceVisual(p.transform, leg, shared, Vector3.up, 900f); // flat boomerang spin
+                        ReplaceVisual(p.transform, leg, legMaterials, Vector3.up, 900f); // flat boomerang spin
                         // The two side projectiles leave their parent in the first physics step (course behaviour), so
                         // each projectile carries its own cleanup.
                         p.gameObject.AddComponent<ProjectileLifetime>().seconds = LifetimeSeconds;
+                        // One boomerang whirl per volley (the centre projectile), a hit sound per leg (voice-limited).
+                        AddAudio(p.gameObject, p.transform == root.transform ? SoundId.BoomerangLaunch : SoundId.None, SoundId.LegHit, 0.85f);
                     }
                 });
                 GameObject rockPrefab = CopyPrefab(CourseProjectiles + "Bomb.prefab", RockName, root =>
@@ -130,11 +135,16 @@ namespace GameDevAgent.ContentTools
                     spin.degreesPerSecond = 300f;
                     AddTrail(bomb.model, dustTrail, 0.22f, 0.2f, new Color(0.55f, 0.5f, 0.42f, 0.45f), new Color(0.55f, 0.5f, 0.42f, 0f));
                     bomb.explodeEffect = rockImpact;
+                    AddAudio(root, SoundId.RockLaunch, SoundId.RockImpact, 1f); // impact once per rock, at the area damage
                 });
 
                 AssignTowers(emberPrefab, rockPrefab, legPrefab);
                 AssetDatabase.SaveAssets();
-                if (!string.IsNullOrEmpty(shotsDir)) RenderLineup(new[] { ember, rock, leg }, shared);
+                if (!string.IsNullOrEmpty(shotsDir))
+                {
+                    RenderLineup(new[] { ember, rock, leg }, new[] { new[] { shared }, new[] { shared }, legMaterials });
+                    RenderPatasolaComparison(leg, legMaterials);
+                }
                 foreach (string line in Report) Debug.Log(Tag + line);
                 Debug.Log(Tag + "DONE ok");
                 return true;
@@ -436,6 +446,218 @@ namespace GameDevAgent.ContentTools
             return m;
         }
 
+        private const string PatasolaFbx = LegendContentBuilder.Root + "/Characters/PatasolaTD/PatasolaTD.fbx";
+        private const float LegLength = 0.56f; // same size as the phase 14 leg
+
+        /// <summary>
+        /// Phase 14.1: La Patasola's real leg, cut from her body mesh (Patasola_Cuerpo) with its original UVs and
+        /// normals, so it renders with her original body material and texture. The cut at the top of the thigh is
+        /// covered by a short wrap of her skirt cloth (second submesh, original skirt material). The leg is laid along
+        /// +X (flat spin around Y like a boomerang), scaled to <see cref="LegLength"/> and centred on its pivot.
+        /// The original materials are used by reference and never modified.
+        /// </summary>
+        private static Mesh ExtractPatasolaLeg(out Material[] materials)
+        {
+            GameObject model = AssetDatabase.LoadAssetAtPath<GameObject>(PatasolaFbx);
+            if (model == null) throw new System.Exception("missing " + PatasolaFbx);
+            var inst = (GameObject)PrefabUtility.InstantiatePrefab(model);
+            try
+            {
+                SkinnedMeshRenderer[] parts = inst.GetComponentsInChildren<SkinnedMeshRenderer>(true);
+                SkinnedMeshRenderer body = parts.First(s => s.name.Contains("Cuerpo"));
+                SkinnedMeshRenderer skirt = parts.First(s => s.name.Contains("Falda"));
+                materials = new[] { body.sharedMaterial, skirt.sharedMaterial };
+                var baked = new Mesh();
+                body.BakeMesh(baked, true);
+                Transform t = body.transform;
+                Vector3[] w = baked.vertices.Select(v => t.position + t.rotation * v).ToArray();
+                Vector3[] n = baked.normals.Select(v => (t.rotation * v).normalized).ToArray();
+                Vector2[] uv = baked.uv;
+                int[] tris = baked.triangles;
+                Object.DestroyImmediate(baked);
+
+                float minY = w.Min(p => p.y), maxY = w.Max(p => p.y), h = maxY - minY;
+                // The skeleton decides: the whole leg is the chain (thigh, leg, foot, toes) of the side whose foot bone
+                // is lower (the other side ends in a short stump). A vertex belongs to the leg when its nearest deform
+                // bone is in that chain and it is below the pelvis.
+                Transform[] deform = body.bones.Where(b => b != null && !b.name.StartsWith("c_")).ToArray();
+                Transform FootOf(string sfx) => deform.FirstOrDefault(b => b.name == "foot" + sfx);
+                Transform footL = FootOf(".l"), footR = FootOf(".r");
+                if (footL == null || footR == null) throw new System.Exception("foot bones not found");
+                string sideSuffix = footR.position.y < footL.position.y ? ".r" : ".l";
+                bool LegBone(Transform b) => b.name.EndsWith(sideSuffix) && (b.name.StartsWith("thigh") || b.name.StartsWith("leg") || b.name.StartsWith("foot") || b.name.StartsWith("toes"));
+                Transform pelvis = deform.FirstOrDefault(b => b.name == "root.x");
+                float pelvisY = pelvis != null ? pelvis.position.y : minY + h * 0.55f;
+                var isLeg = new bool[w.Length];
+                for (int i = 0; i < w.Length; i++)
+                {
+                    if (w[i].y > pelvisY) continue;
+                    Transform best = null;
+                    float bestD = float.MaxValue;
+                    foreach (Transform b in deform)
+                    {
+                        float d = (b.position - w[i]).sqrMagnitude;
+                        if (d < bestD) { bestD = d; best = b; }
+                    }
+                    isLeg[i] = best != null && LegBone(best);
+                }
+                float cutY = w.Where((p, i) => isLeg[i]).Max(p => p.y);
+                Log("  leg side " + sideSuffix + " (foot bones at y " + footL.position.y.ToString("0.00") + " / " + footR.position.y.ToString("0.00") + "), " + isLeg.Count(x => x) + " vertices, pelvis y " + pelvisY.ToString("0.00"));
+                var keepIndex = new HashSet<int>(Enumerable.Range(0, w.Length).Where(i => isLeg[i]));
+
+                var map = new Dictionary<int, int>();
+                var verts = new List<Vector3>();
+                var norms = new List<Vector3>();
+                var uvs = new List<Vector2>();
+                var legTris = new List<int>();
+                int Map(int i)
+                {
+                    if (map.TryGetValue(i, out int j)) return j;
+                    map[i] = verts.Count;
+                    verts.Add(w[i]); norms.Add(n[i]); uvs.Add(uv != null && uv.Length > i ? uv[i] : Vector2.zero);
+                    return verts.Count - 1;
+                }
+                for (int i = 0; i < tris.Length; i += 3)
+                {
+                    if (!keepIndex.Contains(tris[i]) || !keepIndex.Contains(tris[i + 1]) || !keepIndex.Contains(tris[i + 2])) continue;
+                    legTris.Add(Map(tris[i])); legTris.Add(Map(tris[i + 1])); legTris.Add(Map(tris[i + 2]));
+                }
+                if (legTris.Count == 0) throw new System.Exception("no leg triangles found in " + body.name);
+
+                // Cloth wrap over the cut (skirt material): a short tube and a top cap.
+                var top = verts.Where(p => p.y > cutY - 0.04f).ToList();
+                Vector3 c = new Vector3(top.Average(p => p.x), cutY, top.Average(p => p.z));
+                float radius = top.Max(p => new Vector2(p.x - c.x, p.z - c.z).magnitude) * 1.1f;
+                const int sides = 12;
+                var wrapTris = new List<int>();
+                float yLow = cutY - 0.085f, yHigh = cutY + 0.012f;
+                int ringStart = verts.Count;
+                for (int ring = 0; ring < 2; ring++)
+                {
+                    for (int k = 0; k <= sides; k++)
+                    {
+                        float a = k * Mathf.PI * 2f / sides;
+                        var dir = new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a));
+                        verts.Add(c + dir * radius * (ring == 0 ? 0.97f : 1.04f) + Vector3.up * ((ring == 0 ? yLow : yHigh) - cutY));
+                        norms.Add(dir);
+                        uvs.Add(new Vector2(0.25f + 0.5f * k / sides, ring == 0 ? 0.38f : 0.52f)); // a band of the skirt texture
+                    }
+                }
+                for (int k = 0; k < sides; k++)
+                {
+                    int a0 = ringStart + k, a1 = a0 + 1, b0 = ringStart + sides + 1 + k, b1 = b0 + 1;
+                    wrapTris.AddRange(new[] { a0, b0, b1, a0, b1, a1 });
+                }
+                int capCentre = verts.Count;
+                verts.Add(c + Vector3.up * (yHigh - cutY + 0.01f)); norms.Add(Vector3.up); uvs.Add(new Vector2(0.5f, 0.45f));
+                int capRing = verts.Count;
+                for (int k = 0; k <= sides; k++)
+                {
+                    float a = k * Mathf.PI * 2f / sides;
+                    verts.Add(c + new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a)) * radius * 1.04f + Vector3.up * (yHigh - cutY));
+                    norms.Add(Vector3.up);
+                    uvs.Add(new Vector2(0.5f + 0.08f * Mathf.Cos(a), 0.45f + 0.08f * Mathf.Sin(a)));
+                }
+                for (int k = 0; k < sides; k++) wrapTris.AddRange(new[] { capCentre, capRing + k + 1, capRing + k });
+                // Outward winding for the wrap: flip triangles whose face normal points to the axis.
+                for (int i = 0; i < wrapTris.Count; i += 3)
+                {
+                    Vector3 a = verts[wrapTris[i]], b = verts[wrapTris[i + 1]], d = verts[wrapTris[i + 2]];
+                    Vector3 fn = Vector3.Cross(b - a, d - a);
+                    Vector3 centroid = (a + b + d) / 3f;
+                    Vector3 outward = centroid.y > yHigh - 0.001f ? Vector3.up : new Vector3(centroid.x - c.x, 0f, centroid.z - c.z);
+                    if (Vector3.Dot(fn, outward) < 0f) { int x = wrapTris[i + 1]; wrapTris[i + 1] = wrapTris[i + 2]; wrapTris[i + 2] = x; }
+                }
+
+                // Lay the leg along +X: thigh (wrap) on one end, foot on the other; scale and centre.
+                Vector3 foot = verts.Take(ringStart).Where(p => p.y < minY + h * 0.06f).Aggregate(Vector3.zero, (s, p) => s + p) / Mathf.Max(1, verts.Take(ringStart).Count(p => p.y < minY + h * 0.06f));
+                Quaternion lay = Quaternion.FromToRotation((foot - c).normalized, Vector3.right);
+                for (int i = 0; i < verts.Count; i++) { verts[i] = lay * (verts[i] - c); norms[i] = lay * norms[i]; }
+                var bounds = new Bounds(verts[0], Vector3.zero);
+                foreach (Vector3 p in verts) bounds.Encapsulate(p);
+                float s = LegLength / Mathf.Max(0.001f, bounds.size.x);
+                for (int i = 0; i < verts.Count; i++) verts[i] = (verts[i] - bounds.center) * s;
+
+                var m = new Mesh { name = "GDA_PatasolaLeg" };
+                m.SetVertices(verts);
+                m.SetNormals(norms);
+                m.SetUVs(0, uvs);
+                m.subMeshCount = 2;
+                m.SetTriangles(legTris, 0);
+                m.SetTriangles(wrapTris, 1);
+                m.RecalculateTangents(); // her body material uses a normal map
+                m.RecalculateBounds();
+                Log("mesh Patasola leg: " + legTris.Count / 3 + " body tris (original UVs, " + materials[0].name + ") + " + wrapTris.Count / 3
+                    + " cloth wrap tris (" + materials[1].name + "), cut at " + (cutY - minY).ToString("0.00") + "/" + h.ToString("0.00") + " of the body height, size " + m.bounds.size.ToString("F2"));
+                return m;
+            }
+            finally
+            {
+                Object.DestroyImmediate(inst);
+            }
+        }
+
+        /// <summary>La Patasola (idle) next to her leg projectile, same light: colour comparison capture.</summary>
+        private static void RenderPatasolaComparison(Mesh leg, Material[] materials)
+        {
+            GameObject patasola = AssetDatabase.LoadAssetAtPath<GameObject>(LegendContentBuilder.PrefabDir + "/Legend_Patasola.prefab");
+            if (patasola == null) return;
+            bool asyncShaders = ShaderUtil.allowAsyncCompilation;
+            ShaderUtil.allowAsyncCompilation = false;
+            var temp = new GameObject("__gda_compare");
+            temp.transform.position = new Vector3(7500f, 0f, 7500f);
+            try
+            {
+                var p = (GameObject)PrefabUtility.InstantiatePrefab(patasola, temp.transform);
+                p.transform.localPosition = new Vector3(0.75f, 0f, 0f);
+                p.transform.localRotation = Quaternion.Euler(0f, 20f, 0f);
+                Animator a = p.GetComponentInChildren<Animator>();
+                AnimationClip idle = a != null && a.runtimeAnimatorController != null ? a.runtimeAnimatorController.animationClips.FirstOrDefault(c => c.name == LegendPresenter.IdleState) : null;
+                if (idle != null) LegendContentBuilder.Pose(a, idle, 0.3f);
+                for (int i = 0; i < 2; i++)
+                {
+                    var go = new GameObject("leg");
+                    go.transform.SetParent(temp.transform, false);
+                    go.transform.localPosition = new Vector3(-0.75f, 0.55f + i * 0.75f, 0f);
+                    go.transform.localRotation = Quaternion.Euler(i == 0 ? 0f : 70f, i == 0 ? 15f : -25f, i == 0 ? -10f : 0f);
+                    go.transform.localScale = Vector3.one * 1.6f;
+                    go.AddComponent<MeshFilter>().sharedMesh = leg;
+                    go.AddComponent<MeshRenderer>().sharedMaterials = materials;
+                }
+                var cam = new GameObject("cam").AddComponent<Camera>();
+                cam.transform.SetParent(temp.transform, false);
+                cam.transform.localPosition = new Vector3(0f, 1.1f, 4.6f);
+                cam.transform.LookAt(temp.transform.position + Vector3.up * 0.95f);
+                cam.fieldOfView = 34f;
+                cam.clearFlags = CameraClearFlags.SolidColor;
+                cam.backgroundColor = new Color(0.42f, 0.52f, 0.40f);
+                var light = new GameObject("key").AddComponent<Light>();
+                light.transform.SetParent(temp.transform, false);
+                light.type = LightType.Directional;
+                light.transform.rotation = Quaternion.Euler(40f, 200f, 0f);
+                RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Flat;
+                RenderSettings.ambientLight = new Color(0.5f, 0.5f, 0.5f);
+                foreach (SkinnedMeshRenderer smr in p.GetComponentsInChildren<SkinnedMeshRenderer>()) smr.updateWhenOffscreen = true;
+                var rt = new RenderTexture(1200, 900, 24) { antiAliasing = 4 };
+                cam.targetTexture = rt;
+                cam.Render();
+                RenderTexture.active = rt;
+                var tex = new Texture2D(1200, 900, TextureFormat.RGB24, false);
+                tex.ReadPixels(new Rect(0, 0, 1200, 900), 0, 0);
+                tex.Apply();
+                RenderTexture.active = null;
+                cam.targetTexture = null;
+                File.WriteAllBytes(System.IO.Path.Combine(shotsDir, "patasola_vs_leg.png"), tex.EncodeToPNG());
+                Object.DestroyImmediate(tex);
+                Object.DestroyImmediate(rt);
+            }
+            finally
+            {
+                Object.DestroyImmediate(temp);
+                ShaderUtil.allowAsyncCompilation = asyncShaders;
+            }
+        }
+
         private static Mesh SaveMesh(Mesh built, string file)
         {
             string path = Dir + "/Meshes/" + file + ".asset";
@@ -445,8 +667,10 @@ namespace GameDevAgent.ContentTools
             existing.name = built.name;
             existing.SetVertices(built.vertices);
             existing.SetUVs(0, built.uv);
-            existing.SetTriangles(built.triangles, 0);
             existing.SetNormals(built.normals);
+            if (built.tangents != null && built.tangents.Length == built.vertexCount) existing.SetTangents(built.tangents);
+            existing.subMeshCount = built.subMeshCount;
+            for (int i = 0; i < built.subMeshCount; i++) existing.SetTriangles(built.GetTriangles(i), i);
             existing.RecalculateBounds();
             Object.DestroyImmediate(built);
             EditorUtility.SetDirty(existing);
@@ -569,7 +793,7 @@ namespace GameDevAgent.ContentTools
 
         // ------------------------------------------------------------------ projectile visuals
 
-        private static void ReplaceVisual(Transform projectile, Mesh mesh, Material material, Vector3 axis, float speed)
+        private static void ReplaceVisual(Transform projectile, Mesh mesh, Material[] materials, Vector3 axis, float speed)
         {
             foreach (Transform child in projectile.Cast<Transform>().ToList())
             {
@@ -583,11 +807,20 @@ namespace GameDevAgent.ContentTools
             visual.transform.localScale = Vector3.one / Mathf.Max(0.0001f, s); // the mesh is authored in metres
             visual.AddComponent<MeshFilter>().sharedMesh = mesh;
             var mr = visual.AddComponent<MeshRenderer>();
-            mr.sharedMaterial = material;
+            mr.sharedMaterials = materials; // one material per submesh
             mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             var spin = visual.AddComponent<ProjectileSpin>();
             spin.axis = axis.normalized;
             spin.degreesPerSecond = speed;
+        }
+
+        /// <summary>Sound design: themed launch / impact sounds (the course projectile then skips its generic sounds).</summary>
+        private static void AddAudio(GameObject go, SoundId launch, SoundId impact, float impactVolume)
+        {
+            ProjectileAudio a = go.GetComponent<ProjectileAudio>() ?? go.AddComponent<ProjectileAudio>();
+            a.launch = launch;
+            a.impact = impact;
+            a.impactVolume = impactVolume;
         }
 
         private static void AddTrail(Transform parent, Material material, float time, float width, Color start, Color end)
@@ -629,7 +862,7 @@ namespace GameDevAgent.ContentTools
 
         // ------------------------------------------------------------------ captures
 
-        private static void RenderLineup(Mesh[] meshes, Material material)
+        private static void RenderLineup(Mesh[] meshes, Material[][] materials)
         {
             Directory.CreateDirectory(shotsDir);
             bool asyncShaders = ShaderUtil.allowAsyncCompilation;
@@ -640,15 +873,16 @@ namespace GameDevAgent.ContentTools
             {
                 // The camera looks along -Z, so +X is on the left of the image: ember, rock, leg from left to right.
                 float x = 1.0f;
-                foreach (Mesh m in meshes)
+                for (int mi = 0; mi < meshes.Length; mi++)
                 {
+                    Mesh m = meshes[mi];
                     var go = new GameObject(m.name);
                     go.transform.SetParent(temp.transform, false);
                     go.transform.localPosition = new Vector3(x, 0f, 0f);
                     go.transform.localRotation = Quaternion.Euler(m.name.Contains("Leg") ? 60f : 15f, 25f, 0f);
                     go.transform.localScale = Vector3.one * (m.name.Contains("Leg") ? 1.5f : m.name.Contains("Ember") ? 2.2f : 1.6f);
                     go.AddComponent<MeshFilter>().sharedMesh = m;
-                    go.AddComponent<MeshRenderer>().sharedMaterial = material;
+                    go.AddComponent<MeshRenderer>().sharedMaterials = materials[mi];
                     x -= 1.0f;
                 }
                 var cam = new GameObject("cam").AddComponent<Camera>();
