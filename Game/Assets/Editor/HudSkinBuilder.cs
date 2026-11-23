@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using TMPro;
 using UnityEditor;
 using UnityEditor.Events;
@@ -77,6 +78,73 @@ namespace GameDevAgent.UiTools
                         menu.BuildForPreview(what == "hub");
                     }
                     RenderOverlays(System.IO.Path.Combine(outDir, "tutorial_" + what + ".png"), 1688, 780);
+                }
+                code = 0;
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError(Tag + "Capture failed: " + e);
+            }
+            EditorApplication.Exit(code);
+        }
+
+        /// <summary>Phase 12.1: HUD of Test 4 with the placement hint and "cancelar" shown, at the five target resolutions.</summary>
+        public static void CapturePlacementHintFromCommandLine()
+        {
+            int code = 1;
+            try
+            {
+                string outDir = null;
+                string[] args = System.Environment.GetCommandLineArgs();
+                for (int i = 0; i < args.Length - 1; i++) if (args[i] == "-gdaOutDir") outDir = args[i + 1];
+                if (string.IsNullOrEmpty(outDir)) throw new System.ArgumentException("-gdaOutDir is required");
+                Directory.CreateDirectory(outDir);
+                foreach (Vector2Int size in new[] { new Vector2Int(1920, 1080), new Vector2Int(1280, 720), new Vector2Int(960, 540), new Vector2Int(844, 390), new Vector2Int(800, 360) })
+                {
+                    UnityEditor.SceneManagement.EditorSceneManager.OpenScene("Assets/Course/Scenes/Test 4.unity", UnityEditor.SceneManagement.OpenSceneMode.Single);
+                    PlacementHintView view = Object.FindAnyObjectByType<PlacementHintView>(FindObjectsInactive.Include);
+                    if (view != null)
+                    {
+                        view.panel.SetActive(true);
+                        view.message.text = "toca una casilla para invocar a la madremonte";
+                        if (view.cancelButton != null) view.cancelButton.SetActive(true);
+                    }
+                    RenderOverlays(System.IO.Path.Combine(outDir, "hint_" + size.x + "x" + size.y + ".png"), size.x, size.y);
+                }
+                code = 0;
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError(Tag + "Capture failed: " + e);
+            }
+            EditorApplication.Exit(code);
+        }
+
+        /// <summary>HUD of each scene in -gdaScenes "Test 1,Test 2" (edit mode, as saved) at -gdaSize WxH (default 1920x1080).</summary>
+        public static void CaptureScenesHudFromCommandLine()
+        {
+            int code = 1;
+            try
+            {
+                string outDir = null, scenes = "Test 1,Test 2,Test 3,Test 4", size = "1920x1080";
+                string[] args = System.Environment.GetCommandLineArgs();
+                for (int i = 0; i < args.Length - 1; i++)
+                {
+                    if (args[i] == "-gdaOutDir") outDir = args[i + 1];
+                    if (args[i] == "-gdaScenes") scenes = args[i + 1];
+                    if (args[i] == "-gdaSize") size = args[i + 1];
+                }
+                if (string.IsNullOrEmpty(outDir)) throw new System.ArgumentException("-gdaOutDir is required");
+                Directory.CreateDirectory(outDir);
+                foreach (string sz in size.Split(','))
+                {
+                    string[] wh = sz.Split('x');
+                    int w = int.Parse(wh[0]), h = int.Parse(wh[1]);
+                    foreach (string scene in scenes.Split(','))
+                    {
+                        UnityEditor.SceneManagement.EditorSceneManager.OpenScene("Assets/Course/Scenes/" + scene.Trim() + ".unity", UnityEditor.SceneManagement.OpenSceneMode.Single);
+                        RenderOverlays(System.IO.Path.Combine(outDir, "hud_" + scene.Trim().Replace(" ", "") + "_" + w + "x" + h + ".png"), w, h);
+                    }
                 }
                 code = 0;
             }
@@ -668,9 +736,18 @@ namespace GameDevAgent.UiTools
                 SkinCard(towerButton);
             }
 
+            // Phase 12.2: the vine follows the tray width (1 to 4 cards: Test 1-3 unlock fewer legends). It is tiled at its
+            // natural size, so it never stretches nor overflows the tray; it used to be a fixed 320 px strip offset by -24 px.
             Image vine = Img(tray, "Vine", Sp("vine"));
             Ignore(vine.gameObject);
-            Corner(vine.rectTransform, new Vector2(0.5f, 1f), new Vector2(-24f * U, 14f * U), new Vector2(320f, 30f) * U, new Vector2(0.5f, 1f));
+            vine.type = Image.Type.Tiled;
+            vine.raycastTarget = false;
+            RectTransform vr = vine.rectTransform;
+            vr.anchorMin = new Vector2(0f, 1f);
+            vr.anchorMax = new Vector2(1f, 1f);
+            vr.pivot = new Vector2(0.5f, 1f);
+            vr.sizeDelta = new Vector2(-24f * U, 30f * U); // 12 px inside each tray edge
+            vr.anchoredPosition = new Vector2(0f, 14f * U);
             CornerOrnament(tray, "Corner TL", new Vector2(0f, 1f), 0f);
             CornerOrnament(tray, "Corner TR", new Vector2(1f, 1f), -90f);
             CornerOrnament(tray, "Corner BR", new Vector2(1f, 0f), 180f);
@@ -738,29 +815,64 @@ namespace GameDevAgent.UiTools
 
         private static void BuildPlacementHint(Transform canvas, RectTransform tray)
         {
+            // Phase 12.1: a small, translucent, NON-interactive hint at the top centre, right under the wave indicator
+            // (the 20 px margin above the wave pill cannot hold a 34 px hint). It never receives raycasts, so
+            // TowerManager.IsPointerOverUi ignores it and the ground behind it stays buildable.
             Transform rootT = Child(canvas, "Placement Hint", false) ?? NewChild(canvas, "Placement Hint").transform;
-            Place(rootT, new Vector2(0.5f, 0f), new Vector2(0f, 132f * U), new Vector2(559f * U, 66f * U));
+            Vector2 hintSize = new Vector2(310f, 34f) * U; // ~55 % of the old 559 px width, 34 px high
+            Place(rootT, new Vector2(0.5f, 1f), new Vector2(0f, -(20f + 48f + 8f) * U), hintSize);
             var view = GetOrAdd<PlacementHintView>(rootT.gameObject);
+            CanvasGroup group = GetOrAdd<CanvasGroup>(rootT.gameObject);
+            group.alpha = 1f;
+            group.blocksRaycasts = false;
+            group.interactable = false;
 
             Transform panel = Child(rootT, "Panel", false) ?? NewChild(rootT, "Panel").transform;
-            Place(panel, new Vector2(0.5f, 0f), Vector2.zero, new Vector2(559f * U, 66f * U));
-            ((RectTransform)panel).pivot = new Vector2(0.5f, 0f);
-            SetImage(panel.gameObject, Sp("panel_surface"));
-            var row = Layout<HorizontalLayoutGroup>(panel.gameObject);
-            row.padding = new RectOffset(38, 22, 18, 18);
-            row.spacing = 12f * U;
-            Fit(panel.gameObject, true, true);
+            Transform oldCancel = Child(panel, "Cancel Button", false);
+            if (oldCancel != null) Object.DestroyImmediate(oldCancel.gameObject); // now a separate real button (below)
+            var oldFit = panel.GetComponent<ContentSizeFitter>();
+            if (oldFit != null) Object.DestroyImmediate(oldFit);
+            var oldRow = panel.GetComponent<HorizontalLayoutGroup>();
+            if (oldRow != null) Object.DestroyImmediate(oldRow);
+            Place(panel, new Vector2(0.5f, 1f), Vector2.zero, hintSize);
+            Image bg = SetImage(panel.gameObject, Sp("panel_surface"));
+            bg.color = new Color(1f, 1f, 1f, 0.6f); // background at 60 %, text stays opaque
 
-            TMP_Text message = Text(panel, "Message", "toca una casilla para construir la torre cañón", fontBold, 18f * U, HudTheme.Contour);
+            TMP_Text message = Text(panel, "Message", "toca una casilla para invocar al mohán", fontBold, 14f * U, HudTheme.Contour);
+            message.alignment = TextAlignmentOptions.Center;
+            message.textWrappingMode = TextWrappingModes.NoWrap;
+            message.enableAutoSizing = true; // "toca una casilla para invocar al hojarasquín" fits at every resolution
+            message.fontSizeMin = 10f * U;
+            message.fontSizeMax = 14f * U;
+            RectTransform mr = message.rectTransform;
+            mr.anchorMin = Vector2.zero;
+            mr.anchorMax = Vector2.one;
+            mr.pivot = new Vector2(0.5f, 0.5f);
+            mr.offsetMin = new Vector2(14f * U, 2f * U);
+            mr.offsetMax = new Vector2(-14f * U, -2f * U);
+            foreach (Graphic g in rootT.GetComponentsInChildren<Graphic>(true)) g.raycastTarget = false;
 
-            Transform plate = Child(panel, "Cancel Button", false) ?? NewChild(panel, "Cancel Button").transform;
-            Button button = Plate(plate, false, false, "cancelar", 140f);
+            // "cancelar": a real button (it must keep blocking the build behind it), attached to the right of the tower
+            // tray so it follows the tray width, shown only while a legend is being placed.
+            Transform cancel = Child(tray, "Placement Cancel", false) ?? NewChild(tray, "Placement Cancel").transform;
+            Button button = Plate(cancel, false, false, "cancelar", 112f, 44f);
+            Ignore(cancel.gameObject);
+            var cr = (RectTransform)cancel;
+            cr.anchorMin = cr.anchorMax = new Vector2(1f, 0.5f);
+            cr.pivot = new Vector2(0f, 0.5f);
+            cr.anchoredPosition = new Vector2(10f * U, 0f);
             SetOnClick(button, view.Cancel);
 
             rootT.SetSiblingIndex(tray.GetSiblingIndex() + 1);
             view.panel = panel.gameObject;
             view.message = message;
+            view.cancelButton = cancel.gameObject;
+            view.preferredWidth = hintSize.x;
+            view.sideMargin = 16f * U;
+            view.avoid = new[] { "Gold Panel", "Book Integrity", "Pause Button" }
+                .Select(n => Child(canvas, n, false) as RectTransform).Where(r => r != null).ToArray();
             panel.gameObject.SetActive(false);
+            cancel.gameObject.SetActive(false);
         }
 
         // ------------------------------------------------------------------ shared components
@@ -946,7 +1058,8 @@ namespace GameDevAgent.UiTools
             column.padding = new RectOffset(0, 0, Mathf.RoundToInt(21f * U), 0);
             column.spacing = 6f * U;
 
-            Image emblem = Img(content, "Emblem", Sp("emblem"));
+            // Phase 12.4: the Sacred Book emblem (MenuJungleBuilder) replaces the castle; the original stays as a fallback.
+            Image emblem = Img(content, "Emblem", sprites.ContainsKey("emblem_libro") ? Sp("emblem_libro") : Sp("emblem"));
             emblem.preserveAspect = true;
             Element(emblem.gameObject, 150f * U, 120f * U);
             TMP_Text title = Child(root, "Title", false) != null ? Child(root, "Title", false).GetComponent<TMP_Text>()

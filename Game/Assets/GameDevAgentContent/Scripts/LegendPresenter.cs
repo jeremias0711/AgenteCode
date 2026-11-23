@@ -24,12 +24,22 @@ public class LegendPresenter : MonoBehaviour
     [Tooltip("Slow tower only: seconds between two Attack animations while enemies are inside the slowing area.")]
     public float slowAttackInterval = 2.5f;
     public float turnSpeed = 6f;
+    [Tooltip("Normalized time of the attack impact in the Attack clip (< 0 = off: the clip plays from its start). When set, " +
+             "each shot starts the clip just before the impact and speeds up the rest so it ends before the next shot. " +
+             "Presentation only: the shot itself is still fired by the tower.")]
+    public float attackImpact = -1f;
+    [Tooltip("Seconds between the shot and the visual impact when attackImpact is set.")]
+    public float attackLead = 0.1f;
 
     public const string IdleState = "Idle";
     public const string AttackState = "Attack";
     public const string HitState = "Hit";
     public const string DeathState = "Death";
     public const string SpawnState = "Spawn";
+    /// <summary>Float parameter driving the speed of the Attack state (only in controllers with attackImpact).</summary>
+    public const string AttackSpeedParameter = "AttackSpeed";
+    private const float MaxAttackSpeed = 2.5f;
+    private static readonly int AttackSpeedHash = Animator.StringToHash(AttackSpeedParameter);
 
     private static readonly int AttackHash = Animator.StringToHash(AttackState);
     private static readonly int HitHash = Animator.StringToHash(HitState);
@@ -51,6 +61,12 @@ public class LegendPresenter : MonoBehaviour
     public int HitCount { get; private set; }
     public bool DeathPlayed { get; private set; }
     public string LastState { get; private set; }
+    /// <summary>Speed and start (normalized) of the last synchronised Attack (read by the automated tests).</summary>
+    public float LastAttackSpeed { get; private set; } = 1f;
+    public float LastAttackStart { get; private set; }
+
+    private float attackClipLength;
+    private bool attackSpeedParam;
 
     void Awake()
     {
@@ -63,6 +79,18 @@ public class LegendPresenter : MonoBehaviour
         {
             animator.applyRootMotion = false;
         }
+    }
+
+    private bool attackInfoRead;
+
+    private void ReadAttackInfo()
+    {
+        if (attackInfoRead || animator == null || animator.runtimeAnimatorController == null) return;
+        attackInfoRead = true;
+        foreach (AnimationClip clip in animator.runtimeAnimatorController.animationClips)
+            if (clip != null && clip.name == AttackState) attackClipLength = clip.length;
+        foreach (AnimatorControllerParameter p in animator.parameters)
+            if (p.nameHash == AttackSpeedHash && p.type == AnimatorControllerParameterType.Float) attackSpeedParam = true;
     }
 
     void Start()
@@ -151,7 +179,32 @@ public class LegendPresenter : MonoBehaviour
             return;
         }
         AttackCount++;
+        if (attackImpact >= 0f) ReadAttackInfo();
+        if (attackImpact >= 0f && attackClipLength > 0f && attackSpeedParam && tower != null && tower.fireRate > 0f)
+        {
+            PlaySynchronisedAttack();
+            return;
+        }
         Play(AttackHash, AttackState, 0.08f);
+    }
+
+    /// <summary>
+    /// The shot is already fired (the tower is the source of truth). The clip starts attackLead seconds before its
+    /// impact, and its speed makes the remaining part end within 90% of the current fire interval (upgrades included),
+    /// so consecutive shots never cut the strike. Never slower than the authored speed.
+    /// </summary>
+    private void PlaySynchronisedAttack()
+    {
+        float window = tower.fireRate * 0.9f - attackLead;
+        float tail = (1f - attackImpact) * attackClipLength; // clip seconds from the impact to the end
+        float speed = window > 0.05f ? Mathf.Clamp(tail / window, 1f, MaxAttackSpeed) : MaxAttackSpeed;
+        float startSeconds = Mathf.Max(0f, attackImpact * attackClipLength - attackLead * speed);
+        LastAttackSpeed = speed;
+        LastAttackStart = startSeconds / attackClipLength;
+        if (animator == null || !animator.isActiveAndEnabled || !animator.HasState(0, AttackHash)) return;
+        animator.SetFloat(AttackSpeedHash, speed);
+        LastState = AttackState;
+        animator.CrossFadeInFixedTime(AttackHash, 0.06f, 0, startSeconds);
     }
 
     private void OnHealthChanged(TowerHealth h)

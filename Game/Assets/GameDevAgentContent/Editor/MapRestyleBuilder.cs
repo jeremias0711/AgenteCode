@@ -39,6 +39,7 @@ namespace GameDevAgent.ContentTools
             public Color ambientSky, ambientEquator, ambientGround;
             public string[] decor;
             public int decorCount;
+            public bool swapCourseDecor; // phase 12.3: also replace the course decoration (done for Test 4-6 in phase 11)
         }
 
         // Map 1 (levels 1-2): bright, simple, few props. Map 2 (levels 3-4): deeper forest, richer props.
@@ -57,6 +58,20 @@ namespace GameDevAgent.ContentTools
                 lightIntensity = 1.0f, lightEuler = new Vector3(40f, -20f, 0f),
                 ambientSky = new Color(0.52f, 0.50f, 0.56f), ambientEquator = new Color(0.42f, 0.38f, 0.36f), ambientGround = new Color(0.22f, 0.20f, 0.18f),
                 decor = new[] { "Muro", "Arco", "Pilar", "Poste", "Roca3", "Rocas" }, decorCount = 9 },
+            // Phase 12.3, "Nueva partida" (Test 1-3, introductory): the map 1 language, a little brighter and sparser
+            // in Test 1, then gradually richer towards the campaign.
+            new MapStyle { scene = "Assets/Course/Scenes/Test 1.unity", groundTint = new Color(1f, 1f, 0.94f), lightColor = new Color(1f, 0.97f, 0.90f),
+                lightIntensity = 1.08f, lightEuler = new Vector3(52f, -25f, 0f),
+                ambientSky = new Color(0.58f, 0.62f, 0.58f), ambientEquator = new Color(0.44f, 0.48f, 0.42f), ambientGround = new Color(0.27f, 0.27f, 0.23f),
+                decor = new[] { "Arbol", "Hongos", "Rocas" }, decorCount = 5, swapCourseDecor = true },
+            new MapStyle { scene = "Assets/Course/Scenes/Test 2.unity", groundTint = new Color(0.96f, 1f, 0.90f), lightColor = new Color(1f, 0.96f, 0.88f),
+                lightIntensity = 1.05f, lightEuler = new Vector3(50f, -35f, 0f),
+                ambientSky = new Color(0.55f, 0.61f, 0.56f), ambientEquator = new Color(0.42f, 0.48f, 0.41f), ambientGround = new Color(0.26f, 0.26f, 0.22f),
+                decor = new[] { "Arbol2", "Planta", "Hongos", "Roca3" }, decorCount = 6, swapCourseDecor = true },
+            new MapStyle { scene = "Assets/Course/Scenes/Test 3.unity", groundTint = new Color(0.92f, 0.98f, 0.86f), lightColor = new Color(0.98f, 0.98f, 0.88f),
+                lightIntensity = 1.02f, lightEuler = new Vector3(52f, -40f, 0f),
+                ambientSky = new Color(0.52f, 0.59f, 0.53f), ambientEquator = new Color(0.39f, 0.46f, 0.39f), ambientGround = new Color(0.24f, 0.25f, 0.20f),
+                decor = new[] { "Arbol", "Arbol_2", "Tronco", "Hongos", "Rocas2" }, decorCount = 7, swapCourseDecor = true },
             // The tutorial runs on a copy of map 1: same look as levels 1-2.
             new MapStyle { scene = "Assets/Course/Scenes/Tutorial.unity", groundTint = new Color(1f, 1f, 1f), lightColor = new Color(1f, 0.96f, 0.88f),
                 lightIntensity = 1.05f, lightEuler = new Vector3(50f, -30f, 0f),
@@ -98,7 +113,12 @@ namespace GameDevAgent.ContentTools
                 }
                 GameObject plaza = BuildBookPlaza();
                 if (plaza != null) RefreshBookPortrait(plaza);
-                foreach (MapStyle style in Styles) RestyleScene(style, path, props);
+                foreach (MapStyle style in Styles)
+                {
+                    if (style.swapCourseDecor) LegendContentBuilder.DecorateScene(style.scene, props);
+                    RestyleScene(style, path, props);
+                }
+                foreach (string line in LegendContentBuilder.Report) Report.Add(line);
                 AssetDatabase.SaveAssets();
                 if (!string.IsNullOrEmpty(shotsDir)) Captures(plaza);
                 foreach (string line in Report) Debug.Log(Tag + line);
@@ -275,14 +295,24 @@ namespace GameDevAgent.ContentTools
 
         // ------------------------------------------------------------------ scenes
 
-        private static List<List<Vector3>> Routes()
+        /// <summary>
+        /// Enemy routes of the open scene: wave spawners (campaign), simple spawners (Test 1-3, "Nueva partida") and, if a
+        /// scene had neither, every Path component.
+        /// </summary>
+        public static List<List<Vector3>> Routes()
         {
             var routes = new List<List<Vector3>>();
+            var paths = new List<Path>();
             foreach (EnemyWaveSpawner s in Object.FindObjectsByType<EnemyWaveSpawner>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
             {
                 if (!s.enabled) continue;
-                var paths = new List<Path> { s.thePath };
+                paths.Add(s.thePath);
                 if (s.extraPaths != null) paths.AddRange(s.extraPaths);
+            }
+            foreach (SimpleEnemySpawner s in Object.FindObjectsByType<SimpleEnemySpawner>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
+                if (s.enabled) paths.Add(s.thePath);
+            if (paths.All(p => p == null)) paths.AddRange(Object.FindObjectsByType<Path>(FindObjectsInactive.Exclude, FindObjectsSortMode.None));
+            {
                 foreach (Path p in paths)
                 {
                     if (p == null || p.points == null || p.points.Length < 2) continue;
@@ -394,6 +424,9 @@ namespace GameDevAgent.ContentTools
             Report.Add(System.IO.Path.GetFileName(style.scene) + ": ground " + groundSlots + " material slots -> " + ground.name + ", " + routes.Count +
                 " stone road ribbon(s) at y " + baseY.ToString("0.00") + ", light " + (sun != null ? "set" : "missing") + ", " + placed + " decoration props in the no-build band");
         }
+
+        /// <summary>Stone-slab ribbon mesh along a polyline (reused by the jungle menus, phase 12.4).</summary>
+        public static Mesh BuildRibbon(List<Vector3> poly, float width, float y, float tile) => RibbonMesh(poly, width, y, tile);
 
         private static Mesh RibbonMesh(List<Vector3> poly, float width, float y, float tile)
         {

@@ -1,0 +1,226 @@
+{
+ "source": "C:\\Users\\jerem\\OneDrive\\Documentos\\GameDevAgent\\3D_Videojuego\\Rigging y animación-20261122T004316Z-1-001\\Rigging y animación\\Patasola\\Patasola_TowerDefense_FBX\\Patasola_TowerDefense_FBX\\Patasola_TowerDefense.blend",
+ "mode": "character",
+ "name": "PatasolaTD",
+ "warnings": [],
+ "meshes": [
+  {
+   "name": "Patasola_Top",
+   "tris_source": 9476,
+   "tris_export": 6632,
+   "ratio": 0.7,
+   "world_size_center": [
+    0.248,
+    0.266,
+    0.271,
+    0.009,
+    0.014,
+    -0.273
+   ],
+   "materials": [
+    "Material.003"
+   ]
+  },
+  {
+   "name": "Patasola_Falda",
+   "tris_source": 18606,
+   "tris_export": 7425,
+   "ratio": 0.4,
+   "world_size_center": [
+    0.498,
+    0.526,
+    0.464,
+    0.011,
+    0.009,
+    -0.702
+   ],
+   "materials": [
+    "Material.004"
+   ]
+  },
+  {
+   "name": "Patasola_Cuerpo",
+   "tris_source": 8416,
+   "tris_export": 8416,
+   "ratio": 1.0,
+   "world_size_center": [
+    0.309,
+    0.572,
+    1.357,
+    -0.012,
+    0.012,
+    -0.173
+   ],
+   "materials": [
+    "Material.002"
+   ]
+  },
+  {
+   "name": "Patasola_Pelo",
+   "tris_source": 15170,
+   "tris_export": 6823,
+   "ratio": 0.45,
+   "world_size_center": [
+    0.34,
+    0.277,
+    0.476,
+    0.02,
+    0.02,
+    -0.216
+   ],
+   "materials": [
+    "Material.001"
+   ]
+  }
+ ],
+ "textures": [
+  "Textures/Material_003_albedo.png",
+  "Textures/Material_003_normal.png",
+  "Textures/Material_003_ms.png",
+  "Textures/Material_004_albedo.png",
+  "Textures/Material_004_normal.png",
+  "Textures/Material_004_ms.png",
+  "Textures/Material_002_albedo.png",
+  "Textures/Material_002_normal.png",
+  "Textures/Material_002_ms.png",
+  "Textures/Material_001_albedo.png",
+  "Textures/Material_001_normal.png",
+  "Textures/Material_001_ms.png"
+ ],
+ "materials": {
+  "Material.003": {
+   "albedo": "Textures/Material_003_albedo.png",
+   "normal": "Textures/Material_003_normal.png",
+   "ms": "Textures/Material_003_ms.png",
+   "cutout": false,
+   "color": [
+    0.800000011920929,
+    0.800000011920929,
+    0.800000011920929,
+    1.0
+   ]
+  },
+  "Material.004": {
+   "albedo": "Textures/Material_004_albedo.png",
+   "normal": "Textures/Material_004_normal.png",
+   "ms": "Textures/Material_004_ms.png",
+   "cutout": false,
+   "color": [
+    0.800000011920929,
+    0.800000011920929,
+    0.800000011920929,
+    1.0
+   ]
+  },
+  "Material.002": {
+   "albedo": "Textures/Material_002_albedo.png",
+   "normal": "Textures/Material_002_normal.png",
+   "ms": "Textures/Material_002_ms.png",
+   "cutout": false,
+   "color": [
+    0.800000011920929,
+    0.800000011920929,
+    0.800000011920929,
+    1.0
+   ]
+  },
+  "Material.001": {
+   "albedo": "Textures/Material_001_albedo.png",
+   "normal": "Textures/Material_001_normal.png",
+   "ms": "Textures/Material_001_ms.png",
+   "cutout": false,
+   "color": [
+    0.800000011920929,
+    0.800000011920929,
+    0.800000011920929,
+    1.0
+   ]
+  }
+ },
+ "actions": [
+  {
+   "name": "Patasola_Aparecer",
+   "frames": [
+    1.0,
+    60.0
+   ]
+  },
+  {
+   "name": "Patasola_Ataque_Garras",
+   "frames": [
+    1.0,
+    69.0
+   ]
+  },
+  {
+   "name": "Patasola_Celebrar",
+   "frames": [
+    1.0,
+    86.0
+   ]
+  },
+  {
+   "name": "Patasola_Flotar",
+   "frames": [
+    1.0,
+    159.0
+   ]
+  },
+  {
+   "name": "Patasola_Flotar_Idle",
+   "frames": [
+    1.0,
+    159.0
+   ]
+  },
+  {
+   "name": "Patasola_Flotar_InPlace",
+   "frames": [
+    1.0,
+    159.0
+   ]
+  },
+  {
+   "name": "Patasola_Grito",
+   "frames": [
+    1.0,
+    85.0
+   ]
+  },
+  {
+   "name": "Patasola_Muerte",
+   "frames": [
+    1.0,
+    60.0
+   ]
+  },
+  {
+   "name": "Patasola_Patada",
+   "frames": [
+    1.0,
+    36.0
+   ]
+  },
+  {
+   "name": "Patasola_Recibir_Dano",
+   "frames": [
+    1.0,
+    56.0
+   ]
+  }
+ ],
+ "armature": {
+  "name": "rig",
+  "bones": 345,
+  "deform": 67
+ },
+ "fps": 30,
+ "selected_for_export": [
+  "rig",
+  "Patasola_Top",
+  "Patasola_Falda",
+  "Patasola_Cuerpo",
+  "Patasola_Pelo"
+ ],
+ "ok": true
+}

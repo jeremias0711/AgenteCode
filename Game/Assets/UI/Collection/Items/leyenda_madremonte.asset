@@ -26,3 +26,36 @@ MonoBehaviour:
   selectable: 0
   ownerItemId: 
   contentKey: 
+  previewPrefab: {fileID: 171171234140234069, guid: 21cdb19e69fa1534e8cf2cfa4f92a163, type: 3}
+  functionLabel: "lenta \xB7 ralentiza a los enemigos"
+  appearances:
+  - id: piedra
+    displayName: piedra
+    swatch: {r: 0.62, g: 0.6, b: 0.56, a: 1}
+    originals:
+    - {fileID: 2100000, guid: 33053e8786b9a9545a23ac3f86648e64, type: 2}
+    - {fileID: 2100000, guid: db18d9385e4d5614f871149437bd1a5c, type: 2}
+    replacements:
+    - {fileID: 2100000, guid: bf695f18885251444b53f9d036772285, type: 2}
+    - {fileID: 2100000, guid: 74e9ddf159c3c3d48a23702de51b5248, type: 2}
+    unlockHint: "se podr\xE1 equipar cuando existan las apariencias en partida"
+  - id: bronce
+    displayName: bronce
+    swatch: {r: 0.72, g: 0.45, b: 0.24, a: 1}
+    originals:
+    - {fileID: 2100000, guid: 33053e8786b9a9545a23ac3f86648e64, type: 2}
+    - {fileID: 2100000, guid: db18d9385e4d5614f871149437bd1a5c, type: 2}
+    replacements:
+    - {fileID: 2100000, guid: fbacc9bd36bbc1d4fa32cb79d5f11756, type: 2}
+    - {fileID: 2100000, guid: 8ddbf70aef9dc134fa0df834d165187a, type: 2}
+    unlockHint: "se podr\xE1 equipar cuando existan las apariencias en partida"
+  - id: oro
+    displayName: oro
+    swatch: {r: 0.95, g: 0.76, b: 0.32, a: 1}
+    originals:
+    - {fileID: 2100000, guid: 33053e8786b9a9545a23ac3f86648e64, type: 2}
+    - {fileID: 2100000, guid: db18d9385e4d5614f871149437bd1a5c, type: 2}
+    replacements:
+    - {fileID: 2100000, guid: 9c475e0a9ad4bcd4a8bf5b72880a40dd, type: 2}
+    - {fileID: 2100000, guid: 150885a2b2e87f642b66abfe1256df16, type: 2}
+    unlockHint: "se podr\xE1 equipar cuando existan las apariencias en partida"

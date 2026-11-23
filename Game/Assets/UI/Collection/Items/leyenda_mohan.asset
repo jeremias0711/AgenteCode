@@ -26,3 +26,48 @@ MonoBehaviour:
   selectable: 0
   ownerItemId: 
   contentKey: 
+  previewPrefab: {fileID: 5851051001400592180, guid: a4452b531f7b9544ea5cd805f1a4f6f8, type: 3}
+  functionLabel: "ca\xF1\xF3n \xB7 ataque individual"
+  appearances:
+  - id: piedra
+    displayName: piedra
+    swatch: {r: 0.62, g: 0.6, b: 0.56, a: 1}
+    originals:
+    - {fileID: 2100000, guid: 9dc52533f1b43bd43bbfce32d8682de0, type: 2}
+    - {fileID: 2100000, guid: 27a0039c4ef9d7648b33e5824c8ab37e, type: 2}
+    - {fileID: 2100000, guid: 07109c9ce109c1d4ca87821383dc7c4f, type: 2}
+    - {fileID: 2100000, guid: caf0e090ab533ad459db7f79192b655b, type: 2}
+    replacements:
+    - {fileID: 2100000, guid: 067fcf9b7af88444895d93507ee6aa18, type: 2}
+    - {fileID: 2100000, guid: 216aa65113a84754797c07fe2fc4207f, type: 2}
+    - {fileID: 2100000, guid: f51ad97c7b77b2b4fb7793aa828d3bba, type: 2}
+    - {fileID: 2100000, guid: 72c9fd69b40319f49980af99b651b6f3, type: 2}
+    unlockHint: "se podr\xE1 equipar cuando existan las apariencias en partida"
+  - id: bronce
+    displayName: bronce
+    swatch: {r: 0.72, g: 0.45, b: 0.24, a: 1}
+    originals:
+    - {fileID: 2100000, guid: 9dc52533f1b43bd43bbfce32d8682de0, type: 2}
+    - {fileID: 2100000, guid: 27a0039c4ef9d7648b33e5824c8ab37e, type: 2}
+    - {fileID: 2100000, guid: 07109c9ce109c1d4ca87821383dc7c4f, type: 2}
+    - {fileID: 2100000, guid: caf0e090ab533ad459db7f79192b655b, type: 2}
+    replacements:
+    - {fileID: 2100000, guid: 3665edcbf87f2404b9fe1c999b295fd8, type: 2}
+    - {fileID: 2100000, guid: ed14f1687c232134e815fb3a4e9f94ee, type: 2}
+    - {fileID: 2100000, guid: 728fa26ec0493fe458ac161e0784f040, type: 2}
+    - {fileID: 2100000, guid: 0522c660c2bdc2a4c98ac461667cc9d6, type: 2}
+    unlockHint: "se podr\xE1 equipar cuando existan las apariencias en partida"
+  - id: oro
+    displayName: oro
+    swatch: {r: 0.95, g: 0.76, b: 0.32, a: 1}
+    originals:
+    - {fileID: 2100000, guid: 9dc52533f1b43bd43bbfce32d8682de0, type: 2}
+    - {fileID: 2100000, guid: 27a0039c4ef9d7648b33e5824c8ab37e, type: 2}
+    - {fileID: 2100000, guid: 07109c9ce109c1d4ca87821383dc7c4f, type: 2}
+    - {fileID: 2100000, guid: caf0e090ab533ad459db7f79192b655b, type: 2}
+    replacements:
+    - {fileID: 2100000, guid: e0f0853061a519f4a9fad29e64f1ccb3, type: 2}
+    - {fileID: 2100000, guid: 20dfd72ba2ff9034d84f6a81276ee84a, type: 2}
+    - {fileID: 2100000, guid: e793690f7218d134686f34d1557f68e2, type: 2}
+    - {fileID: 2100000, guid: 7625c75319b875941ae02fd7e037f15c, type: 2}
+    unlockHint: "se podr\xE1 equipar cuando existan las apariencias en partida"

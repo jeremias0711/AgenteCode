@@ -26,3 +26,6 @@ MonoBehaviour:
   selectable: 0
   ownerItemId: 
   contentKey: 
+  previewPrefab: {fileID: 3526048314429209413, guid: 6e0cd092dd234304f8b20d7a2c1e2c9c, type: 3}
+  functionLabel: el objetivo que defienden las leyendas
+  appearances: []

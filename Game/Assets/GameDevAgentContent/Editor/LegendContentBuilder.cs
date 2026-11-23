@@ -41,6 +41,8 @@ namespace GameDevAgent.ContentTools
         {
             "Assets/Course/Scenes/Test 4.unity", "Assets/Course/Scenes/Test 5.unity", "Assets/Course/Scenes/Test 6.unity",
             "Assets/Course/Scenes/Tutorial.unity",
+            // Phase 12.3: the "Nueva partida" scenes share the same look.
+            "Assets/Course/Scenes/Test 1.unity", "Assets/Course/Scenes/Test 2.unity", "Assets/Course/Scenes/Test 3.unity",
         };
 
         public class LegendSpec
@@ -50,6 +52,15 @@ namespace GameDevAgent.ContentTools
             public float height, yaw;
             public string idle, attack, hit, death, spawn; // substrings of the Blender action names (null = none)
             public bool isStatic; // unrigged model without animations (only the visual turn towards the target)
+            // Phase 13.1: bone used as Generic root-motion node. Its horizontal (XZ) motion is extracted and, with root
+            // motion off, discarded: travelling clips stay on the defender's tile (height and rotation stay in the pose).
+            public string motionNode;
+            // Phase 13.1: normalized time of the attack impact. >= 0 makes LegendPresenter start the Attack clip just
+            // before the impact when the tower fires and fit the rest of the clip inside the fire interval.
+            public float attackImpact = -1f;
+            // Phase 13.1: the rig origin is the authored ground (La Patasola floats ~0.19 m above it in every clip), so
+            // the model is placed by its origin instead of by the lowest point of the idle pose.
+            public bool groundAtOrigin;
         }
 
         // Definitive assignment (phase 11). Heights in metres = Unity units (towers are ~2.5 units high).
@@ -61,11 +72,22 @@ namespace GameDevAgent.ContentTools
                 height = 2.15f, yaw = 0f, idle = "TD_Idle", attack = "Habilidad", hit = "Recibir_Golpe", death = "Muerte", spawn = "Aparecer" },
             new LegendSpec { id = LegendId.Hojarasquin, folder = Root + "/Characters/Hojarasquin", fbx = "Hojarasquin.fbx", tower = "Bomb Tower",
                 height = 1.9f, yaw = 0f, idle = "Espera", attack = "Ataque_Fisga", hit = "Recibir_Golpe", death = "Caida" },
-            // Authorised by the user (outside the "Tower Defense" folders): Personajes/Patasola/.../PatasolaFinalVer_Rig_Texturas.blend.
-            // Only its unrigged low-poly meshes are usable and the file has no actions: static model.
-            new LegendSpec { id = LegendId.Patasola, folder = Root + "/Characters/Patasola", fbx = "Patasola.fbx", tower = "Triple Shot Tower",
-                height = 2.0f, yaw = 180f, isStatic = true }, // no rig to detect the facing: the model looks along -Z
+            // Phase 13.1, authorised by the user: Rigging y animación/Patasola/Patasola_TowerDefense_FBX/Patasola_TowerDefense.blend
+            // (same four meshes as the phase 11 static model, now with an Auto-Rig Pro rig and 10 actions). Exported to
+            // Characters/PatasolaTD; the static Characters/Patasola export stays as it was (see StaticPatasola).
+            //  - Idle: Flotar_InPlace (Flotar_Idle travels 2.3 m back and forth, it is not an in-place idle).
+            //  - Attack: Ataque_Garras (in place; impact at frame 26/69 = 0.37, measured on the hand bones).
+            //  - Hit: Recibir_Dano. Death: Muerte (falls back ~0.5 m: the XZ part is extracted through root.x).
+            //  - Not used: Aparecer (starts under the ground and travels 2 m), Flotar (travels), Patada (travels 1 m),
+            //    Grito and Celebrar (no matching defender event).
+            new LegendSpec { id = LegendId.Patasola, folder = Root + "/Characters/PatasolaTD", fbx = "PatasolaTD.fbx", tower = "Triple Shot Tower",
+                height = 2.0f, yaw = 0f, idle = "Flotar_InPlace", attack = "Ataque_Garras", hit = "Recibir_Dano", death = "Muerte",
+                motionNode = "root.x", attackImpact = 0.37f, groundAtOrigin = true },
         };
+
+        /// <summary>Phase 11 static La Patasola (unrigged source, no actions). Kept as the fallback when PatasolaTD is missing.</summary>
+        public static readonly LegendSpec StaticPatasola = new LegendSpec { id = LegendId.Patasola, folder = Root + "/Characters/Patasola",
+            fbx = "Patasola.fbx", tower = "Triple Shot Tower", height = 2.0f, yaw = 180f, isStatic = true }; // no rig: looks along -Z
 
         // Enemy prefab -> ghost model (eligible "PERSONAJES ENEMIGOS_RIG_ANIM"). Only the look changes.
         public static readonly Dictionary<string, string> EnemyGhosts = new Dictionary<string, string>
@@ -107,28 +129,16 @@ namespace GameDevAgent.ContentTools
 
                 var legendPrefabs = new Dictionary<LegendId, GameObject>();
                 var deathLengths = new Dictionary<LegendId, float>();
-                foreach (LegendSpec spec in Legends)
+                var usedSpecs = new Dictionary<LegendId, LegendSpec>();
+                foreach (LegendSpec wanted in Legends)
                 {
-                    string fbx = spec.folder + "/" + spec.fbx;
-                    if (AssetDatabase.LoadAssetAtPath<GameObject>(fbx) == null && !File.Exists(fbx))
-                    {
-                        Log("MISSING " + fbx + " -> " + spec.tower + " keeps its provisional model");
-                        continue;
-                    }
-                    ConfigureTextures(spec.folder + "/Textures", 1024);
-                    if (spec.isStatic)
-                    {
-                        ConfigureModel(fbx, null);
-                        RemapMaterials(fbx, spec.folder);
-                        deathLengths[spec.id] = 0f;
-                        legendPrefabs[spec.id] = BuildStaticPrefab(fbx, "Legend_" + spec.id, spec.height, spec.yaw);
-                        continue;
-                    }
-                    ConfigureModel(fbx, spec);
-                    RemapMaterials(fbx, spec.folder);
-                    AnimatorController ctrl = BuildController(fbx, spec, out float death);
+                    LegendSpec spec = Resolve(wanted);
+                    if (spec == null) continue;
+                    GameObject prefab = BuildLegendPrefab(spec, out float death);
+                    if (prefab == null) continue;
+                    legendPrefabs[spec.id] = prefab;
                     deathLengths[spec.id] = death;
-                    legendPrefabs[spec.id] = BuildCharacterPrefab(fbx, ctrl, "Legend_" + spec.id, spec.height, spec.yaw, true);
+                    usedSpecs[spec.id] = spec;
                 }
 
                 var ghostPrefabs = new Dictionary<string, GameObject>();
@@ -147,11 +157,8 @@ namespace GameDevAgent.ContentTools
                 Dictionary<string, GameObject> props = BuildPropPrefabs();
                 GameObject book = BuildBookShrine(props);
 
-                foreach (LegendSpec spec in Legends)
-                {
-                    if (legendPrefabs.TryGetValue(spec.id, out GameObject prefab))
-                        ApplyLegendToTower(TowerDir + "/" + spec.tower + ".prefab", spec, prefab, deathLengths[spec.id]);
-                }
+                foreach (var pair in usedSpecs)
+                    ApplyLegendToTower(TowerDir + "/" + pair.Value.tower + ".prefab", pair.Value, legendPrefabs[pair.Key], deathLengths[pair.Key]);
                 if (!legendPrefabs.ContainsKey(LegendId.Patasola)) Log("Triple Shot Tower: no model of La Patasola: provisional model kept");
                 if (book != null) ApplyBookToCastle(book);
                 foreach (var pair in EnemyGhosts)
@@ -193,6 +200,139 @@ namespace GameDevAgent.ContentTools
         private static void Log(string line)
         {
             Report.Add(line);
+        }
+
+        private static bool SourceExists(LegendSpec spec)
+        {
+            string fbx = spec.folder + "/" + spec.fbx;
+            return AssetDatabase.LoadAssetAtPath<GameObject>(fbx) != null || File.Exists(fbx);
+        }
+
+        /// <summary>The spec to build for a legend: its definitive source or, for La Patasola, the static phase 11 model.</summary>
+        private static LegendSpec Resolve(LegendSpec spec)
+        {
+            if (SourceExists(spec)) return spec;
+            if (spec.id == LegendId.Patasola && SourceExists(StaticPatasola))
+            {
+                Log("MISSING " + spec.folder + "/" + spec.fbx + " -> La Patasola keeps her static phase 11 model");
+                return StaticPatasola;
+            }
+            Log("MISSING " + spec.folder + "/" + spec.fbx + " -> " + spec.tower + " keeps its provisional model");
+            return null;
+        }
+
+        /// <summary>
+        /// Poses a model in edit mode. Rigs with a root-motion node (phase 13.1, La Patasola) are evaluated by their
+        /// Animator, exactly as in play mode: AnimationClip.SampleAnimation writes the raw curves and skips the Generic
+        /// root-motion handling, which left parts of the model out of place in the captures. Other rigs keep the
+        /// phase 11 sampling.
+        /// </summary>
+        public static void Pose(Animator animator, AnimationClip clip, float normalizedTime)
+        {
+            if (animator.avatar != null && animator.hasRootMotion && animator.runtimeAnimatorController != null)
+            {
+                animator.Rebind();
+                animator.Play(clip.name, 0, Mathf.Clamp(normalizedTime, 0f, 0.999f));
+                animator.Update(0f);
+                return;
+            }
+            clip.SampleAnimation(animator.gameObject, clip.length * normalizedTime);
+        }
+
+        /// <summary>Per skinned part: baked bounds in the Idle pose and in the bind pose, bones and weights (diagnostics).</summary>
+        private static void LogSkinParts(GameObject prefab)
+        {
+            var inst = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
+            Animator a = inst.GetComponentInChildren<Animator>();
+            AnimationClip idle = a != null && a.runtimeAnimatorController != null ? a.runtimeAnimatorController.animationClips.FirstOrDefault(c => c.name == LegendPresenter.IdleState) : null;
+            if (idle != null) Pose(a, idle, 0f);
+            foreach (SkinnedMeshRenderer smr in inst.GetComponentsInChildren<SkinnedMeshRenderer>(true))
+            {
+                var baked = new Mesh();
+                smr.BakeMesh(baked, true);
+                Bounds lb = baked.bounds;
+                Object.DestroyImmediate(baked);
+                Mesh m = smr.sharedMesh;
+                int maxW = 0;
+                if (m != null) { var bpv = m.GetBonesPerVertex(); for (int i = 0; i < bpv.Length; i++) maxW = Mathf.Max(maxW, bpv[i]); }
+                Log("  skin " + smr.name + ": baked idle centre " + (smr.transform.position + smr.transform.rotation * lb.center).ToString("F2") + " size " + lb.size.ToString("F2")
+                    + ", mesh bind bounds " + (m != null ? m.bounds.size.ToString("F2") : "none") + ", bones " + smr.bones.Length + " (null " + smr.bones.Count(x => x == null) + "), root " + (smr.rootBone != null ? smr.rootBone.name : "none")
+                    + ", max weights " + maxW + ", quality " + smr.quality + ", lossyScale " + smr.transform.lossyScale.ToString("F3"));
+            }
+            Object.DestroyImmediate(inst);
+        }
+
+        /// <summary>Import settings, materials, controller and Legend_* prefab of one legend.</summary>
+        private static GameObject BuildLegendPrefab(LegendSpec spec, out float deathLength)
+        {
+            string fbx = spec.folder + "/" + spec.fbx;
+            ConfigureTextures(spec.folder + "/Textures", 1024);
+            if (spec.isStatic)
+            {
+                ConfigureModel(fbx, null);
+                RemapMaterials(fbx, spec.folder);
+                deathLength = 0f;
+                return BuildStaticPrefab(fbx, "Legend_" + spec.id, spec.height, spec.yaw);
+            }
+            ConfigureModel(fbx, spec);
+            RemapMaterials(fbx, spec.folder);
+            AnimatorController ctrl = BuildController(fbx, spec, out deathLength);
+            return BuildCharacterPrefab(fbx, ctrl, "Legend_" + spec.id, spec.height, spec.yaw, true, spec.groundAtOrigin);
+        }
+
+        /// <summary>
+        /// Phase 13.1: rebuilds ONE legend (model import, controller, Legend_* prefab, its tower visual, its portrait) and
+        /// then the sanctuary content (appearances + HUD). Other legends, enemies, props and maps are not touched.
+        /// Run: Unity -batchmode -projectPath Game -executeMethod GameDevAgent.ContentTools.LegendContentBuilder.BuildPatasolaFromCommandLine
+        ///      [-gdaShots &lt;dir&gt;]
+        /// </summary>
+        public static void BuildPatasolaFromCommandLine()
+        {
+            string[] args = System.Environment.GetCommandLineArgs();
+            for (int i = 0; i < args.Length - 1; i++) if (args[i] == "-gdaShots") shotsDir = args[i + 1];
+            EditorApplication.Exit(BuildSingle(LegendId.Patasola) ? 0 : 1);
+        }
+
+        [MenuItem("Tools/GameDevAgent/Rebuild La Patasola (phase 13.1)")]
+        public static void BuildPatasolaFromMenu() => BuildSingle(LegendId.Patasola);
+
+        public static bool BuildSingle(LegendId id)
+        {
+            Report.Clear();
+            try
+            {
+                LegendSpec spec = Resolve(Legends.First(s => s.id == id));
+                if (spec == null) throw new System.Exception("no source for " + id);
+                GameObject prefab = BuildLegendPrefab(spec, out float death);
+                if (prefab == null) throw new System.Exception("prefab not built for " + id);
+                ApplyLegendToTower(TowerDir + "/" + spec.tower + ".prefab", spec, prefab, death);
+                EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+                LogSkinParts(prefab);
+                var portraits = new Dictionary<string, Sprite> { { LegendRoster.CollectionId(id), RenderPortrait(prefab, "portrait_" + id, true) } };
+                UpdateCollection(portraits);
+                if (!string.IsNullOrEmpty(shotsDir))
+                {
+                    Directory.CreateDirectory(shotsDir);
+                    void Save(Texture2D t, string name) { File.WriteAllBytes(System.IO.Path.Combine(shotsDir, name + ".png"), t.EncodeToPNG()); Object.DestroyImmediate(t); }
+                    foreach (var shot in new[] { ("idle", LegendPresenter.IdleState, 0.3f, 0f), ("idle_side", LegendPresenter.IdleState, 0.6f, 90f),
+                        ("attack_impact", LegendPresenter.AttackState, spec.attackImpact >= 0f ? spec.attackImpact : 0.5f, 30f),
+                        ("hit", LegendPresenter.HitState, 0.3f, 30f), ("death_end", LegendPresenter.DeathState, 1f, 30f) })
+                        Save(RenderModel(prefab, 420, 560, 1.15f, 0.5f, shot.Item4, shot.Item2, shot.Item3, false, true), "legend_" + id + "_" + shot.Item1);
+                    Save(RenderTowerRow(), "towers_row");
+                }
+                AssetDatabase.SaveAssets();
+                foreach (string line in Report) Debug.Log(Tag + line);
+                bool sanctuary = CollectionContentBuilder.Build(); // appearances from the new materials + HUD frame
+                Debug.Log(Tag + "sanctuary content rebuilt: " + sanctuary);
+                Debug.Log(Tag + (sanctuary ? "DONE ok" : "DONE with sanctuary errors"));
+                return sanctuary;
+            }
+            catch (System.Exception e)
+            {
+                foreach (string line in Report) Debug.Log(Tag + line);
+                Debug.LogError(Tag + "FAILED: " + e);
+                return false;
+            }
         }
 
         // ------------------------------------------------------------------ import
@@ -259,6 +399,18 @@ namespace GameDevAgent.ContentTools
             mi.SaveAndReimport(); // refresh defaultClipAnimations from the file
 
             mi = (ModelImporter)AssetImporter.GetAtPath(fbx);
+            bool extractXZ = false;
+            if (!string.IsNullOrEmpty(spec.motionNode))
+            {
+                string nodePath = TransformPath(AssetDatabase.LoadAssetAtPath<GameObject>(fbx), spec.motionNode);
+                if (nodePath == null) Log("WARNING " + System.IO.Path.GetFileName(fbx) + ": motion node '" + spec.motionNode + "' not found: root motion stays in the pose");
+                else
+                {
+                    mi.motionNodeName = nodePath;
+                    extractXZ = true;
+                    Log(System.IO.Path.GetFileName(fbx) + ": motion node " + nodePath + " (XZ extracted and discarded, height and rotation kept)");
+                }
+            }
             var clips = new List<ModelImporterClipAnimation>();
             foreach (ModelImporterClipAnimation take in mi.defaultClipAnimations)
             {
@@ -269,7 +421,7 @@ namespace GameDevAgent.ContentTools
                 take.loopPose = role == LegendPresenter.IdleState;
                 take.lockRootRotation = true;
                 take.lockRootHeightY = true;
-                take.lockRootPositionXZ = true;
+                take.lockRootPositionXZ = !extractXZ; // false = XZ becomes root motion, dropped because root motion is off
                 take.keepOriginalOrientation = true;
                 take.keepOriginalPositionY = true;
                 take.keepOriginalPositionXZ = true;
@@ -278,6 +430,20 @@ namespace GameDevAgent.ContentTools
             mi.clipAnimations = clips.ToArray();
             mi.SaveAndReimport();
             Log(System.IO.Path.GetFileName(fbx) + ": clips " + string.Join(", ", clips.Select(c => c.name + "<-" + c.takeName)));
+        }
+
+        /// <summary>Path (relative to the model root, "/" separated) of the first transform called <paramref name="name"/>.</summary>
+        private static string TransformPath(GameObject model, string name)
+        {
+            if (model == null) return null;
+            foreach (Transform t in model.GetComponentsInChildren<Transform>(true))
+            {
+                if (t.name != name) continue;
+                string path = t.name;
+                for (Transform p = t.parent; p != null && p != model.transform; p = p.parent) path = p.name + "/" + path;
+                return path;
+            }
+            return null;
         }
 
         private static string RoleOf(string takeName, LegendSpec spec)
@@ -372,12 +538,19 @@ namespace GameDevAgent.ContentTools
             AnimatorState idle = sm.AddState(LegendPresenter.IdleState);
             idle.motion = Clip(LegendPresenter.IdleState);
             sm.defaultState = idle;
+            bool syncAttack = spec.attackImpact >= 0f && Clip(LegendPresenter.AttackState) != null;
+            if (syncAttack) ctrl.AddParameter(new AnimatorControllerParameter { name = LegendPresenter.AttackSpeedParameter, type = AnimatorControllerParameterType.Float, defaultFloat = 1f });
             foreach (string role in new[] { LegendPresenter.AttackState, LegendPresenter.HitState, LegendPresenter.SpawnState })
             {
                 AnimationClip clip = Clip(role);
                 if (clip == null) continue;
                 AnimatorState st = sm.AddState(role);
                 st.motion = clip;
+                if (syncAttack && role == LegendPresenter.AttackState)
+                {
+                    st.speedParameter = LegendPresenter.AttackSpeedParameter; // set by LegendPresenter to fit the fire interval
+                    st.speedParameterActive = true;
+                }
                 AnimatorStateTransition back = st.AddTransition(idle);
                 back.hasExitTime = true;
                 back.exitTime = 0.9f;
@@ -458,7 +631,7 @@ namespace GameDevAgent.ContentTools
             return b;
         }
 
-        private static GameObject BuildCharacterPrefab(string fbx, AnimatorController ctrl, string prefabName, float height, float yaw, bool legend)
+        private static GameObject BuildCharacterPrefab(string fbx, AnimatorController ctrl, string prefabName, float height, float yaw, bool legend, bool groundAtOrigin = false)
         {
             GameObject model = AssetDatabase.LoadAssetAtPath<GameObject>(fbx);
             var root = new GameObject(prefabName);
@@ -481,12 +654,14 @@ namespace GameDevAgent.ContentTools
                 b.size.ToString("F2") + " (all vertices: " + raw.size.ToString("F2") + ")");
             float s = b.size.y > 0.001f ? height / b.size.y : 1f;
             inst.transform.localScale = Vector3.one * s;
-            inst.transform.localPosition = new Vector3(-b.center.x * s, -b.min.y * s, -b.center.z * s);
+            inst.transform.localPosition = new Vector3(-b.center.x * s, groundAtOrigin ? 0f : -b.min.y * s, -b.center.z * s);
+            if (groundAtOrigin) Log(prefabName + ": placed by the rig origin (authored ground); idle lowest point " + (b.min.y * s).ToString("0.00") + " above it");
             foreach (SkinnedMeshRenderer smr in inst.GetComponentsInChildren<SkinnedMeshRenderer>())
             {
                 smr.updateWhenOffscreen = false;
                 smr.skinnedMotionVectors = false;
             }
+            if (groundAtOrigin) FitCullingBounds(root.transform, height);
             string path = PrefabDir + "/" + prefabName + ".prefab";
             GameObject prefab = PrefabUtility.SaveAsPrefabAsset(root, path);
             Object.DestroyImmediate(root);
@@ -494,6 +669,27 @@ namespace GameDevAgent.ContentTools
             foreach (SkinnedMeshRenderer smr in prefab.GetComponentsInChildren<SkinnedMeshRenderer>()) tris += smr.sharedMesh != null ? smr.sharedMesh.triangles.Length / 3 : 0;
             Log(prefabName + ".prefab: source height " + b.size.y.ToString("0.00") + " -> " + height + " (scale " + s.ToString("0.000") + "), " + tris + " tris");
             return prefab;
+        }
+
+        /// <summary>
+        /// Phase 13.1: the imported culling bounds of La Patasola's parts are relative to a control bone (c_pos) and do
+        /// not enclose the character, so close cameras culled the skirt or the whole model. Every part gets the same
+        /// cube around the defender (side 2x its height, centred at 0.4x its height): it encloses every clip, including the
+        /// death pose lying on the ground. A cube is used because it stays valid whatever the root bone's rotation is.
+        /// </summary>
+        private static void FitCullingBounds(Transform root, float height)
+        {
+            // Centred low: the source death pose lies on the ground with the hanging leg ~0.8 m under it.
+            Vector3 worldCentre = root.position + Vector3.up * height * 0.4f;
+            float side = height * 2f;
+            foreach (SkinnedMeshRenderer smr in root.GetComponentsInChildren<SkinnedMeshRenderer>(true))
+            {
+                Transform space = smr.rootBone != null ? smr.rootBone : smr.transform;
+                Vector3 s = space.lossyScale;
+                float scale = Mathf.Max(0.0001f, Mathf.Min(Mathf.Abs(s.x), Mathf.Abs(s.y), Mathf.Abs(s.z)));
+                smr.localBounds = new Bounds(space.InverseTransformPoint(worldCentre), Vector3.one * side / scale);
+            }
+            Log(root.name + ": culling bounds of " + root.GetComponentsInChildren<SkinnedMeshRenderer>(true).Length + " skinned parts set to a " + side.ToString("0.0") + " m cube around the defender");
         }
 
         private static GameObject BuildStaticPrefab(string fbx, string prefabName, float height, float yaw)
@@ -657,6 +853,7 @@ namespace GameDevAgent.ContentTools
                 presenter.visualRoot = visual.transform;
                 presenter.animator = visual.GetComponentInChildren<Animator>();
                 presenter.deathDuration = deathLength > 0f ? deathLength + 0.3f : 0f;
+                presenter.attackImpact = spec.attackImpact; // < 0: Attack plays from its start, as in phase 11
                 PrefabUtility.SaveAsPrefabAsset(root, path);
                 Log(System.IO.Path.GetFileName(path) + " -> " + LegendRoster.DisplayName(spec.id) + " (" + hidden + " course renderers hidden, gameplay components untouched)");
             }
@@ -738,7 +935,7 @@ namespace GameDevAgent.ContentTools
 
         // ------------------------------------------------------------------ maps
 
-        private static void DecorateScene(string scenePath, Dictionary<string, GameObject> props)
+        public static void DecorateScene(string scenePath, Dictionary<string, GameObject> props)
         {
             if (!File.Exists(scenePath)) return;
             Scene scene = EditorSceneManager.OpenScene(scenePath, OpenSceneMode.Single);
@@ -820,6 +1017,17 @@ namespace GameDevAgent.ContentTools
         public static Texture2D RenderModel(GameObject prefab, int width, int height, float frameFraction, float focusFraction,
             float yaw, string state, float normalizedTime, bool transparent, bool allVertices = false)
         {
+            // Freshly imported materials would otherwise render invisible while their shader variants compile in the
+            // background (phase 13.1: empty La Patasola portrait, skirt missing in the first captures).
+            bool asyncShaders = ShaderUtil.allowAsyncCompilation;
+            ShaderUtil.allowAsyncCompilation = false;
+            try { return RenderModelSync(prefab, width, height, frameFraction, focusFraction, yaw, state, normalizedTime, transparent, allVertices); }
+            finally { ShaderUtil.allowAsyncCompilation = asyncShaders; }
+        }
+
+        private static Texture2D RenderModelSync(GameObject prefab, int width, int height, float frameFraction, float focusFraction,
+            float yaw, string state, float normalizedTime, bool transparent, bool allVertices)
+        {
             var temp = new GameObject("__gda_render");
             temp.transform.position = new Vector3(5000f, 0f, 5000f);
             var go = (GameObject)PrefabUtility.InstantiatePrefab(prefab, temp.transform);
@@ -830,7 +1038,7 @@ namespace GameDevAgent.ContentTools
             {
                 AnimationClip clip = animator.runtimeAnimatorController.animationClips.FirstOrDefault(c => c.name == state)
                     ?? animator.runtimeAnimatorController.animationClips.FirstOrDefault(c => c.name == LegendPresenter.IdleState);
-                if (clip != null) clip.SampleAnimation(animator.gameObject, clip.length * normalizedTime);
+                if (clip != null) Pose(animator, clip, normalizedTime);
             }
             Bounds b = MeasureBounds(go, !allVertices);
             var camGo = new GameObject("cam");
@@ -894,7 +1102,7 @@ namespace GameDevAgent.ContentTools
                 if (a != null && a.runtimeAnimatorController != null)
                 {
                     AnimationClip idle = a.runtimeAnimatorController.animationClips.FirstOrDefault(c => c.name == LegendPresenter.IdleState);
-                    if (idle != null) idle.SampleAnimation(a.gameObject, idle.length * 0.3f);
+                    if (idle != null) Pose(a, idle, 0.3f);
                     Bounds lb = MeasureBounds(a.gameObject);
                     Log("  row " + names[i] + ": legend height in game " + lb.size.y.ToString("F2") + " (collider capsule height 2.46)");
                 }

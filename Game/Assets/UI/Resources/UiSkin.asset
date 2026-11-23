@@ -159,6 +159,8 @@ MonoBehaviour:
     sprite: {fileID: 21300000, guid: b3642c6e537a7bf40894368a8ad6d008, type: 3}
   - name: vine
     sprite: {fileID: 21300000, guid: 2762e830aadbdf84ead07690a4ff4b22, type: 3}
+  - name: emblem_libro
+    sprite: {fileID: 21300000, guid: 23b7259662c3e1a4d9f1bc067b19f9e0, type: 3}
   fontBold: {fileID: 11400000, guid: b8aedcdbcebd1e043a6db7fb34341e3b, type: 2}
   fontSemi: {fileID: 11400000, guid: e56ec82ae9738f04c9b34ba47bc2f9b6, type: 2}
   fontTitle: {fileID: 11400000, guid: 19e45557149576541ae784369bcd959f, type: 2}
