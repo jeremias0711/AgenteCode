@@ -33,4 +33,12 @@ Recursos derivados de las carpetas elegibles «Tower Defense» / «Tower D» de 
 5. Solo La Patasola (fase 13.1; no toca otras leyendas ni mapas, y rehace las apariencias de la Colección):
    `-executeMethod GameDevAgent.ContentTools.LegendContentBuilder.BuildPatasolaFromCommandLine [-gdaShots <carpeta>]`; prueba `-gdaFlow patasola` (F21).
 7. Sonido: `-executeMethod GameDevAgent.ContentTools.AudioContentBuilder.BuildFromCommandLine` (importación, biblioteca, GameAudio en el Audio Manager y viento de la Madremonte); prueba `-gdaFlow audio` (F23). Volúmenes por código: `AudioSettingsStore.Master/Music/Sfx` (0..1, guardados en PlayerPrefs).
+8. Escala de los enemigos (fase 16): medir en Play con `CourseLevelFlowSmokeTest -gdaFlow enemyscale -gdaHeightsOut <archivo>` y aplicar con `-executeMethod GameDevAgent.ContentTools.EnemyScaleBuilder.BuildFromCommandLine -gdaHeights <archivo>` (solo escala el «Legend Visual», lo apoya en el suelo y sube la barra de vida; enemigo normal = 50 % de la altura media de las leyendas, grandes = 65 %).
+9. Selva (fase 17): `-executeMethod GameDevAgent.ContentTools.JungleTerrainBuilder.BuildFromCommandLine [-gdaShots <carpeta>] [-gdaShotTag before|after] [-gdaCaptureOnly]`. Crea en cada mapa (Test 1-6 y Tutorial) la raíz «GDA Selva»:
+   - relieve visual (`Escenarios/Generated/<Escena>_Relieve.asset`, sin collider) con el shader `GDA/JungleGround` y la textura procedural original `Generated/GDA_SueloSelva.png`;
+   - vegetación, rocas, bordes del camino, claros, cobertura baja, ruinas y entorno del Libro con los props de `Props/Prefabs` (sin colliders, static batching);
+   - cajas «Bloqueo relieve» (capa Path) solo bajo las colinas, a más de 3,4 m de las rutas;
+   - niebla lineal suave.
+   
+   La zona jugable (menos de 3,4 m de las rutas, fuera de la franja superior sin construcción) queda exactamente plana, y las rutas, el suelo funcional, las cámaras y el Libro no cambian. Prueba: `-gdaFlow jungle` (F25).
 6. Proyectiles (fase 14): `-executeMethod GameDevAgent.ContentTools.ProjectileContentBuilder.BuildFromCommandLine [-gdaShots <carpeta>]`; prueba `-gdaFlow projectiles` (F22, comparación directa con los proyectiles del curso).

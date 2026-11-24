@@ -34,7 +34,7 @@ MonoBehaviour:
   - name: bar_track
     sprite: {fileID: 21300000, guid: 83c27c0f86372284e9b7794419e78c43, type: 3}
   - name: bar_fill
-    sprite: {fileID: 21300000, guid: c6d8e10efc01bfb43b9f8b51185ae82d, type: 3}
+    sprite: {fileID: 21300000, guid: d0bf39c5086ccac41b43eb09640ff4c9, type: 3}
   - name: shine
     sprite: {fileID: 21300000, guid: 67234cefec0419d478da582029616170, type: 3}
   - name: ribbon_band
@@ -100,7 +100,7 @@ MonoBehaviour:
   - name: icon_close
     sprite: {fileID: 21300000, guid: 6e81987e40e320e4984d7cfcc1d3a133, type: 3}
   - name: icon_coin
-    sprite: {fileID: 21300000, guid: 1e012e293146dc044bc57df7ce7528db, type: 3}
+    sprite: {fileID: 21300000, guid: c3424bd6b5419674c99e8443186e1fe8, type: 3}
   - name: icon_leaf
     sprite: {fileID: 21300000, guid: 068455a9826e1a34fb041ceddf587c08, type: 3}
   - name: icon_lock
@@ -161,6 +161,159 @@ MonoBehaviour:
     sprite: {fileID: 21300000, guid: 2762e830aadbdf84ead07690a4ff4b22, type: 3}
   - name: emblem_libro
     sprite: {fileID: 21300000, guid: 23b7259662c3e1a4d9f1bc067b19f9e0, type: 3}
-  fontBold: {fileID: 11400000, guid: b8aedcdbcebd1e043a6db7fb34341e3b, type: 2}
-  fontSemi: {fileID: 11400000, guid: e56ec82ae9738f04c9b34ba47bc2f9b6, type: 2}
-  fontTitle: {fileID: 11400000, guid: 19e45557149576541ae784369bcd959f, type: 2}
+  - name: hud_pill
+    sprite: {fileID: 21300000, guid: bcafca0ada656164db4e24d369d7084c, type: 3}
+  - name: notice_dark
+    sprite: {fileID: 21300000, guid: 6b319fb59b45ed949bde14257f5da618, type: 3}
+  - name: instr_pill
+    sprite: {fileID: 21300000, guid: 98bb9079b55beda489ea23c83a58df36, type: 3}
+  - name: cost_tag
+    sprite: {fileID: 21300000, guid: 586490cbed788c24c93eb45281e3c7c6, type: 3}
+  - name: sel_frame
+    sprite: {fileID: 21300000, guid: 48f861e25518e6a4f93893252d6538dc, type: 3}
+  - name: name_plate
+    sprite: {fileID: 21300000, guid: a4a7ec7cc9e5340428c779834801936d, type: 3}
+  - name: info_circle
+    sprite: {fileID: 21300000, guid: 292502f4b48261941877239b416f463b, type: 3}
+  - name: coll_card
+    sprite: {fileID: 21300000, guid: 153e89172fa1cb9418bb99bfc30d4a5d, type: 3}
+  - name: coll_card_viewed
+    sprite: {fileID: 21300000, guid: bbefa93786b1f284da150f3ef21599a1, type: 3}
+  - name: coll_card_locked
+    sprite: {fileID: 21300000, guid: dfc7168bb16c3b54b91ecb5d828db637, type: 3}
+  - name: coll_art
+    sprite: {fileID: 21300000, guid: acf9b44d67e60e54083984af084113e4, type: 3}
+  - name: panel_teal
+    sprite: {fileID: 21300000, guid: e3f136ff5d76fbe4d8181090eacabdb3, type: 3}
+  - name: icon_frame
+    sprite: {fileID: 21300000, guid: fbf65c04713e2b141a0f16d17bdebccf, type: 3}
+  - name: arte_hojarasquin
+    sprite: {fileID: 21300000, guid: 6032eb5a0c19ec34d862e954fbb20d80, type: 3}
+  - name: arte_madremonte
+    sprite: {fileID: 21300000, guid: e2485314a6cafd343bd3fd047e1bc8b2, type: 3}
+  - name: arte_mohan
+    sprite: {fileID: 21300000, guid: 2510699d88c6b094b84188c0a44e6dee, type: 3}
+  - name: arte_patasola
+    sprite: {fileID: 21300000, guid: d0d71ac35d121d84990fd69166f14155, type: 3}
+  - name: barra_oro
+    sprite: {fileID: 21300000, guid: a25001fb8ef2c1640a6d377c60f0c6d8, type: 3}
+  - name: barra_pista
+    sprite: {fileID: 21300000, guid: 40f13a1831cde174c80c096175ddd864, type: 3}
+  - name: barra_verde
+    sprite: {fileID: 21300000, guid: d0bf39c5086ccac41b43eb09640ff4c9, type: 3}
+  - name: btn_coleccion
+    sprite: {fileID: 21300000, guid: f4f621608cf7ae1498f1b6617d553608, type: 3}
+  - name: btn_jugar
+    sprite: {fileID: 21300000, guid: b67cc74ab590faa4599739772fc5f291, type: 3}
+  - name: btn_siguiente
+    sprite: {fileID: 21300000, guid: 9a3118bc6baea9948bb723343e71c02c, type: 3}
+  - name: btn_volver
+    sprite: {fileID: 21300000, guid: f425ab5dcc64e8a48997811dcf3f4705, type: 3}
+  - name: carta_hojarasquin
+    sprite: {fileID: 21300000, guid: 242439e0295f59e4fad123ede2b6ad2b, type: 3}
+  - name: carta_madremonte
+    sprite: {fileID: 21300000, guid: 1412f2cb652b1b144942fbc3122e1682, type: 3}
+  - name: carta_mohan
+    sprite: {fileID: 21300000, guid: 7784290aa8b960d4a81b44dd80b45832, type: 3}
+  - name: carta_patasola
+    sprite: {fileID: 21300000, guid: b131d39a38e593d4395ce5ec67ce0407, type: 3}
+  - name: cinta_banda
+    sprite: {fileID: 21300000, guid: b0ba223075c2ef543a23120c49e783fd, type: 3}
+  - name: cinta_punta
+    sprite: {fileID: 21300000, guid: eef000afebb4a01428b058a916b32c51, type: 3}
+  - name: esquinero
+    sprite: {fileID: 21300000, guid: a17ec994876bc3c43bc9280a9e1a994e, type: 3}
+  - name: est_aviso
+    sprite: {fileID: 21300000, guid: 568a738632a5bb242a6a9910ba55d8ae, type: 3}
+  - name: est_candado
+    sprite: {fileID: 21300000, guid: 133e8307a54f32447bb7aeeb4d21e383, type: 3}
+  - name: est_cerrar
+    sprite: {fileID: 21300000, guid: dc2c04938f437014d82b466765f19039, type: 3}
+  - name: est_check
+    sprite: {fileID: 21300000, guid: ffb449aa06e692d438b6e8b5ac939590, type: 3}
+  - name: fondo_selva
+    sprite: {fileID: 21300000, guid: 6fa9986e49daa264d892d12b076bfa89, type: 3}
+  - name: fx_magia
+    sprite: {fileID: 21300000, guid: 0e0cd97c549053a4ea533d125267a283, type: 3}
+  - name: fx_mariposas
+    sprite: {fileID: 21300000, guid: 4ad6884c97f05364d89cd7649f1ee0ea, type: 3}
+  - name: ico_agua
+    sprite: {fileID: 21300000, guid: df06dc12ec2d0d84384e6ada60edaa70, type: 3}
+  - name: ico_agua2
+    sprite: {fileID: 21300000, guid: 4701a1ec034d50f44a962100a2fec3bb, type: 3}
+  - name: ico_ajustes
+    sprite: {fileID: 21300000, guid: ca70210a3a64ac642b3d8dbc654f50c3, type: 3}
+  - name: ico_avisos
+    sprite: {fileID: 21300000, guid: 46c240055ab0e3845a40ba110fdd995e, type: 3}
+  - name: ico_ayuda
+    sprite: {fileID: 21300000, guid: 4b75d6062c980804b8ae249ca48f2903, type: 3}
+  - name: ico_espiral
+    sprite: {fileID: 21300000, guid: 7a2401ad75956ae47b6e39c1eebae511, type: 3}
+  - name: ico_estadisticas
+    sprite: {fileID: 21300000, guid: a2c2cffe3e60d104dbe0524ca1942d2d, type: 3}
+  - name: ico_estrella
+    sprite: {fileID: 21300000, guid: 19664cb092a249c4a90e63bfdc6c3158, type: 3}
+  - name: ico_fuego
+    sprite: {fileID: 21300000, guid: d70613e0d7f328f42b7247bc8816ba82, type: 3}
+  - name: ico_fuego2
+    sprite: {fileID: 21300000, guid: 9a2c0b9438ecd384e9a1787a67135803, type: 3}
+  - name: ico_hoja
+    sprite: {fileID: 21300000, guid: 1e36197d0df51dc4abcfc69a853d254f, type: 3}
+  - name: ico_hoja2
+    sprite: {fileID: 21300000, guid: 3c804899dc9485446b6132a4cbaa8bbd, type: 3}
+  - name: ico_inicio
+    sprite: {fileID: 21300000, guid: 3038ba026e423f040822a79d481c8cc3, type: 3}
+  - name: ico_montana
+    sprite: {fileID: 21300000, guid: f8514317d721a114c95dcae6371c4d96, type: 3}
+  - name: ico_pausa
+    sprite: {fileID: 21300000, guid: be803538585272b4d9465c38f5cbd758, type: 3}
+  - name: ico_perfil
+    sprite: {fileID: 21300000, guid: 4fcdbfebbce8e224c8fe489369933da5, type: 3}
+  - name: ico_regalo
+    sprite: {fileID: 21300000, guid: 29dcebdab7568a44da9fc02144e9d69a, type: 3}
+  - name: ico_sol
+    sprite: {fileID: 21300000, guid: fcf662673e58924459c451ab3dac16a9, type: 3}
+  - name: ico_trofeo
+    sprite: {fileID: 21300000, guid: f5b77a92172cf0b46a99a923aeab0df6, type: 3}
+  - name: ico_ubicacion
+    sprite: {fileID: 21300000, guid: acac78fac9713db43b3414376d225a70, type: 3}
+  - name: ico_vacio
+    sprite: {fileID: 21300000, guid: 8c90f3daa97eb794189e48b2fa14a812, type: 3}
+  - name: libro_altar
+    sprite: {fileID: 21300000, guid: c7d9211724831534099931e13a890afc, type: 3}
+  - name: luciernagas
+    sprite: {fileID: 21300000, guid: 664d3b6256f3df646b0ff1e6367b6d72, type: 3}
+  - name: luz_libro
+    sprite: {fileID: 21300000, guid: 105ac99420037b04398275e80ff25ed6, type: 3}
+  - name: olvido_humo
+    sprite: {fileID: 21300000, guid: ef1c12fff085b2948a6bb856f7a2a02f, type: 3}
+  - name: rama
+    sprite: {fileID: 21300000, guid: fcd056cb29179a840bfc26f968626344, type: 3}
+  - name: res_calavera
+    sprite: {fileID: 21300000, guid: f84f883be544c71419382435f9e82a84, type: 3}
+  - name: res_libro
+    sprite: {fileID: 21300000, guid: 877befc2b6dbd3143b3b654a9d63dc88, type: 3}
+  - name: res_moneda
+    sprite: {fileID: 21300000, guid: c3424bd6b5419674c99e8443186e1fe8, type: 3}
+  - name: tallado_madera
+    sprite: {fileID: 21300000, guid: 671e4c9a32c8b9244a5a21a010f68c45, type: 3}
+  - name: tallado_musgo
+    sprite: {fileID: 21300000, guid: 3a0ef7c468851574891d96f82c17ea26, type: 3}
+  - name: tallado_pergamino
+    sprite: {fileID: 21300000, guid: b057ce1a3b757474d944b6ffb35cf6e2, type: 3}
+  - name: vineta
+    sprite: {fileID: 21300000, guid: 47581e3cf4cfbda4e9f813f50f7869e7, type: 3}
+  fontBold: {fileID: 11400000, guid: cb96fef28d5b8014db85f5bd0f886383, type: 2}
+  fontSemi: {fileID: 11400000, guid: 53eb40e69832e1248b348344ac57a9ce, type: 2}
+  fontTitle: {fileID: 11400000, guid: ead21b861bfcc354d8b5d56d04fed814, type: 2}
+  fontBody: {fileID: 11400000, guid: a9071cde181d0cd4d8d306e4f9b0b95a, type: 2}
+  fontLogo: {fileID: 11400000, guid: bd1dd0e9f6be6ed4ca0b15fa78a8fac0, type: 2}
+  shadowMaterials:
+  - font: {fileID: 11400000, guid: cb96fef28d5b8014db85f5bd0f886383, type: 2}
+    material: {fileID: 2100000, guid: e263afdffc9f13a4e8457462d57e36f2, type: 2}
+  - font: {fileID: 11400000, guid: 53eb40e69832e1248b348344ac57a9ce, type: 2}
+    material: {fileID: 2100000, guid: 776c39ac60375f8448fb362671472525, type: 2}
+  - font: {fileID: 11400000, guid: ead21b861bfcc354d8b5d56d04fed814, type: 2}
+    material: {fileID: 2100000, guid: ff885d1488d273047a36083d2764b417, type: 2}
+  - font: {fileID: 11400000, guid: bd1dd0e9f6be6ed4ca0b15fa78a8fac0, type: 2}
+    material: {fileID: 2100000, guid: 09d760934c0607245b57146c016e2a44, type: 2}

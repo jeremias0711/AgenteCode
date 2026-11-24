@@ -98,6 +98,18 @@ namespace GameDevAgent.ContentTools
                 {
                     GameAudio ga = am.GetComponent<GameAudio>() ?? am.AddComponent<GameAudio>();
                     ga.library = lib;
+                    // GameAudio owns the music: the course tracks are never played. Unassigning them keeps ~24 MB of
+                    // course music out of the builds (the audio files themselves stay in the project).
+                    AudioManager course = am.GetComponent<AudioManager>();
+                    int unassigned = 0;
+                    if (course != null)
+                    {
+                        var musicSources = new List<AudioSource> { course.menuMusic, course.levelSelectMusic };
+                        if (course.bgm != null) musicSources.AddRange(course.bgm);
+                        foreach (AudioSource s in musicSources)
+                            if (s != null && s.clip != null) { s.clip = null; unassigned++; }
+                    }
+                    report.Add("course music clips unassigned (never played, out of the build): " + unassigned);
                     PrefabUtility.SaveAsPrefabAsset(am, AudioManagerPrefab);
                 }
                 finally { PrefabUtility.UnloadPrefabContents(am); }

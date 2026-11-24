@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en-us">
+<html lang="es">
   <head>
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
@@ -7,10 +7,58 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Defencopolis">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#000000">
-    <title>{{{ PRODUCT_NAME }}}</title>
-    <link rel="icon" href="data:,"> <!-- no favicon file: avoids a 404 request in the console -->
+    <meta name="theme-color" content="#24302E">
+    <meta name="description" content="Towers of Defencopolis: las leyendas colombianas defienden el Libro Sagrado. Juega en el navegador, sin instalar nada.">
+    <title>Towers of Defencopolis</title>
+    <link rel="icon" type="image/png" href="TemplateData/icon-192.png">
+    <link rel="apple-touch-icon" href="TemplateData/apple-touch-icon.png">
+    <link rel="preload" href="TemplateData/fonts/MedievalSharp-Regular.ttf" as="font" type="font/ttf" crossorigin>
+    <style>
+      /* ---- Welcome screen (Towers of Defencopolis, v2 · Bosque palette from HudTheme) -----------------------------
+         Shown at once while the game downloads behind it. "Jugar" is enabled when the game is ready; that tap also
+         unlocks the audio on mobile browsers (and asks for fullscreen where the browser allows it). */
+      @font-face { font-family: "GDA Title"; src: url("TemplateData/fonts/MedievalSharp-Regular.ttf") format("truetype"); font-display: swap; }
+      @font-face { font-family: "GDA Body"; src: url("TemplateData/fonts/Fredoka-SemiBold.ttf") format("truetype"); font-display: swap; }
+      :root { --contour: #24302E; --panel: #4F6361; --panel-deep: #3B5C5A; --sage: #7C946B; --sage-light: #A3B892;
+              --surface: #DDD6CE; --gold: #E3C27A; --text: #FFFDF8; --muted: #8E9590; }
+      #gda-welcome {
+        position: fixed; inset: 0; z-index: 50; display: flex; flex-direction: column; align-items: center; justify-content: center;
+        box-sizing: border-box; padding: calc(env(safe-area-inset-top, 0px) + 12px) calc(env(safe-area-inset-right, 0px) + 16px)
+                 calc(env(safe-area-inset-bottom, 0px) + 12px) calc(env(safe-area-inset-left, 0px) + 16px);
+        background: radial-gradient(ellipse at 50% 35%, #2F4644 0%, var(--contour) 70%); color: var(--text);
+        font-family: "GDA Body", "Trebuchet MS", Arial, sans-serif; text-align: center; overflow: hidden;
+        -webkit-user-select: none; user-select: none; touch-action: manipulation; transition: opacity .35s ease;
+      }
+      #gda-welcome.gda-hide { opacity: 0; pointer-events: none; }
+      #gda-welcome .gda-horizon { position: absolute; left: 0; right: 0; bottom: 0; height: 42%; background: url("TemplateData/forest_horizon.webp") center bottom / cover no-repeat; opacity: .55; pointer-events: none; }
+      #gda-welcome .gda-fireflies { position: absolute; inset: 0; background: url("TemplateData/fireflies.webp") center 30% / min(90vw, 900px) auto no-repeat; opacity: .5; pointer-events: none; animation: gda-glow 5s ease-in-out infinite alternate; }
+      @keyframes gda-glow { from { opacity: .3; } to { opacity: .65; } }
+      #gda-welcome .gda-card { position: relative; display: flex; flex-direction: column; align-items: center; gap: min(1.6vh, 12px); width: min(560px, 100%); box-sizing: border-box; overflow-wrap: break-word; }
+      #gda-welcome .gda-emblem { width: min(22vh, 150px); height: auto; filter: drop-shadow(0 4px 10px rgba(0,0,0,.45)); }
+      #gda-welcome h1 { margin: 0; font-family: "GDA Title", Georgia, serif; font-weight: normal; font-size: clamp(22px, min(7.5vw, 9vh), 54px); line-height: 1.05; max-width: 100%; letter-spacing: .5px; color: var(--text); text-shadow: 0 3px 0 var(--contour), 0 0 18px rgba(227,194,122,.25); }
+      #gda-welcome .gda-sub { margin: 0; font-size: clamp(13px, min(3.4vw, 3.6vh), 17px); color: var(--surface); opacity: .9; }
+      #gda-welcome .gda-progress { width: min(78vw, 340px); height: 12px; border-radius: 6px; background: var(--panel-deep); border: 2px solid var(--contour); box-shadow: inset 0 2px 0 rgba(0,0,0,.25); overflow: hidden; }
+      #gda-welcome .gda-progress > div { width: 0%; height: 100%; background: linear-gradient(var(--gold), #C9A35A); }
+      #gda-welcome .gda-status { min-height: 18px; font-size: 14px; color: var(--surface); }
+      #gda-play {
+        min-width: 200px; min-height: 52px; padding: 10px 34px; border-radius: 14px; border: 3px solid var(--contour);
+        background: linear-gradient(var(--sage-light) 0 18%, var(--sage) 18% 100%); color: var(--text); cursor: pointer;
+        font-family: "GDA Title", Georgia, serif; font-size: 26px; text-shadow: 0 2px 0 var(--contour); box-shadow: 0 4px 0 var(--contour);
+        touch-action: manipulation; -webkit-appearance: none; appearance: none; transition: transform .08s, filter .2s;
+      }
+      #gda-play:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--contour); }
+      #gda-play:disabled { filter: grayscale(.7) brightness(.8); cursor: default; }
+      #gda-welcome .gda-tip { display: none; align-items: center; justify-content: center; gap: 8px; font-size: 13px; color: var(--surface); opacity: .85; }
+      #gda-welcome .gda-tip svg { width: 22px; height: 22px; fill: none; stroke: var(--gold); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+      html.gda-mobile #gda-welcome .gda-tip { display: flex; }
+      #gda-welcome .gda-error { display: none; max-width: 460px; padding: 12px 16px; border-radius: 12px; background: rgba(0,0,0,.35); border: 2px solid var(--gold); font-size: 15px; line-height: 1.4; }
+      #gda-welcome.gda-unsupported .gda-error { display: block; }
+      #gda-welcome.gda-unsupported #gda-play, #gda-welcome.gda-unsupported .gda-progress, #gda-welcome.gda-unsupported .gda-status { display: none; }
+      #gda-welcome .gda-credits { position: absolute; bottom: calc(env(safe-area-inset-bottom, 0px) + 6px); left: 0; right: 0; font-size: 11px; color: var(--muted); }
+      @media (max-height: 420px) { #gda-welcome .gda-emblem { width: 22vh; } #gda-welcome .gda-card { gap: 6px; } #gda-play { min-height: 46px; font-size: 22px; } }
+    </style>
     <style>
       /* DESKTOP (default): the canvas keeps a 16:9 aspect ratio, is centered and shrinks with the window.
          Unity matches its render size to the canvas DOM size, so the game UI (CanvasScaler) adapts by itself.
@@ -23,7 +71,7 @@
         height: min(100vh, calc(100vw * 9 / 16));
         background: #1F1F20;
       }
-      #unity-loading { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); color: #ddd; font: 16px Arial, sans-serif; text-align: center; }
+      #unity-loading { display: none; } /* the welcome screen shows the progress */
       #unity-progress-empty { width: 240px; height: 10px; margin: 8px auto 0; background: #444; border-radius: 5px; overflow: hidden; }
       #unity-progress-full { width: 0%; height: 100%; background: #2fa7e8; }
       #unity-warning { position: absolute; left: 50%; top: 2%; transform: translateX(-50%); display: none; font: 14px Arial, sans-serif; }
@@ -116,6 +164,27 @@
         <div style="font-size:13px;opacity:.75;margin-top:4px">Rotate your phone to landscape</div>
         <button id="gda-rotate-ok" type="button">Continuar en vertical / Continue</button>
       </div>
+    </div>
+    <div id="gda-welcome" role="dialog" aria-labelledby="gda-title">
+      <div class="gda-horizon"></div>
+      <div class="gda-fireflies"></div>
+      <div class="gda-card">
+        <img class="gda-emblem" src="TemplateData/emblem_libro.png" alt="El Libro Sagrado de las Leyendas" width="256" height="205">
+        <h1 id="gda-title">Towers of Defencopolis</h1>
+        <p class="gda-sub">Las leyendas defienden el Libro Sagrado contra El Olvido</p>
+        <div class="gda-progress" aria-hidden="true"><div id="gda-progress-bar"></div></div>
+        <div class="gda-status" id="gda-status" role="status" aria-live="polite">Preparando la selva&hellip;</div>
+        <button id="gda-play" type="button" disabled>Jugar</button>
+        <div class="gda-tip">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="7" width="18" height="10" rx="2"/><path d="M17 11v2"/><path d="M8 3l-2 2 2 2M6 5h5"/></svg>
+          <span>Gira el tel&eacute;fono en horizontal para jugar</span>
+        </div>
+        <div class="gda-error" id="gda-error">
+          Tu navegador no puede ejecutar el juego: necesita WebGL y WebAssembly.<br>
+          Prueba con una versi&oacute;n reciente de Chrome, Safari, Edge o Firefox y activa la aceleraci&oacute;n gr&aacute;fica.
+        </div>
+      </div>
+      <div class="gda-credits">GameDevAgent &middot; Leyendas colombianas</div>
     </div>
     <script src="Build/{{{ LOADER_FILENAME }}}"></script>
     <script>
@@ -280,13 +349,145 @@
         window.GDA_onUnityReady = function () { root.classList.remove("gda-loading"); layout(); };
       })();
 
+      // ---------------------------------------------------------------------------------------------------------
+      // Test hook (only with ?gdaReport=1): sends load milestones, console output and errors to the local preview
+      // server (Distribution/tools/preview_server.py). Never active for players.
+      // ---------------------------------------------------------------------------------------------------------
+      window.GDA_report = function () {};
+      (function () {
+        if (!/[?&]gdaReport=1/.test(location.search)) return;
+        var t0 = Date.now();
+        function send(kind, msg) {
+          try {
+            var url = "/__gda/report?k=" + encodeURIComponent(kind) + "&t=" + (Date.now() - t0) + "&m=" + encodeURIComponent(String(msg).slice(0, 600));
+            if (navigator.sendBeacon) navigator.sendBeacon(url); else fetch(url, { method: "POST", keepalive: true });
+          } catch (e) {}
+        }
+        window.GDA_report = send;
+        ["log", "warn", "error"].forEach(function (level) {
+          var original = console[level];
+          console[level] = function () {
+            var text = Array.prototype.join.call(arguments, " ");
+            if (level !== "log" || text.indexOf("[GDA]") >= 0) send(level, text);
+            return original.apply(console, arguments);
+          };
+        });
+        window.addEventListener("error", function (e) { send("error", (e.message || "error") + " @ " + (e.filename || "") + ":" + (e.lineno || 0)); });
+        window.addEventListener("unhandledrejection", function (e) { send("error", "unhandled rejection: " + (e.reason && e.reason.message || e.reason)); });
+        send("page", "ua=" + navigator.userAgent + " size=" + innerWidth + "x" + innerHeight + " mobile=" + window.GDA_isMobile);
+      })();
+
+      // ---------------------------------------------------------------------------------------------------------
+      // Welcome screen: requirements check, download progress, "Jugar".
+      // ---------------------------------------------------------------------------------------------------------
+      var gdaWelcome = document.getElementById("gda-welcome");
+      var gdaPlay = document.getElementById("gda-play");
+      var gdaStatus = document.getElementById("gda-status");
+      var gdaBar = document.getElementById("gda-progress-bar");
+
+      function gdaSupported() {
+        if (typeof WebAssembly !== "object") return false;
+        try {
+          var c = document.createElement("canvas");
+          return !!(c.getContext("webgl2") || c.getContext("webgl") || c.getContext("experimental-webgl"));
+        } catch (e) { return false; }
+      }
+
+      gdaPlay.addEventListener("click", function (e) {
+        e.preventDefault();
+        if (gdaPlay.disabled) return;
+        gdaWelcome.classList.add("gda-hide");
+        setTimeout(function () { gdaWelcome.style.display = "none"; }, 400);
+        // This tap is a user gesture: the browser lets the game's audio start now. Android Chrome can also enter
+        // fullscreen; iPhone Safari cannot (no element fullscreen), the page simply stays as it is.
+        if (window.GDA_isMobile && window.GDA_fullscreenSupported) {
+          var fsButton = document.getElementById("gda-fs-enter");
+          if (fsButton) fsButton.click();
+        }
+        var canvas = document.getElementById("unity-canvas");
+        if (canvas && canvas.focus) canvas.focus();
+        window.GDA_report("play", "welcome closed");
+      });
+
+      // Texture formats: the release ships the game data twice (DXT for desktop GPUs, ASTC for phones and tablets).
+      // Each device downloads only one of them. WebBuildTools fills GDA_ASTC_DATA; empty = single format build.
+      var GDA_ASTC_DATA = /*GDA_ASTC_DATA*/"";
+      function gdaAstcSupported() {
+        try {
+          var c = document.createElement("canvas");
+          var gl = c.getContext("webgl2") || c.getContext("webgl");
+          return !!(gl && gl.getExtension("WEBGL_compressed_texture_astc"));
+        } catch (e) { return false; }
+      }
+
+      // Game data split in parts (each below the host's file size limit). WebBuildTools fills GDA_DATA_PARTS:
+      // { "<data file>": { bytes: N, parts: ["<data file>.part0", ...] } }. null = the data is a single file.
+      var GDA_DATA_PARTS = /*GDA_DATA_PARTS*/null;
+
+      function gdaFetchParts(entry, onProgress) {
+        var loaded = entry.parts.map(function () { return 0; });
+        function report() { var sum = 0; for (var i = 0; i < loaded.length; i++) sum += loaded[i]; onProgress(Math.min(1, sum / entry.bytes)); }
+        return Promise.all(entry.parts.map(function (name, i) {
+          return fetch("Build/" + name).then(function (response) {
+            if (!response.ok) throw new Error("HTTP " + response.status + " " + name);
+            if (!response.body || !response.body.getReader) {
+              return response.blob().then(function (b) { loaded[i] = b.size; report(); return b; });
+            }
+            var reader = response.body.getReader(), chunks = [];
+            function pump() {
+              return reader.read().then(function (r) {
+                if (r.done) return new Blob(chunks);
+                chunks.push(r.value);
+                loaded[i] += r.value.byteLength;
+                report();
+                return pump();
+              });
+            }
+            return pump();
+          });
+        })).then(function (blobs) { return URL.createObjectURL(new Blob(blobs, { type: "application/octet-stream" })); });
+      }
+
+      function gdaShowProgress(fraction) {
+        var pct = Math.round(100 * fraction);
+        gdaBar.style.width = pct + "%";
+        if (pct !== gdaLastShown) {
+          gdaLastShown = pct;
+          gdaStatus.textContent = pct < 90 ? "Descargando la selva… " + pct + " %" : "Despertando a las leyendas…";
+          if (pct % 25 === 0) window.GDA_report("progress", pct);
+        }
+      }
+      var gdaLastShown = -1;
+
+      function gdaStart() {
+        var gdaForced = /[?&]gdaTex=(astc|dxt)/.exec(location.search); // tests only
+        var gdaUseAstc = !!GDA_ASTC_DATA && (gdaForced ? gdaForced[1] === "astc" : gdaAstcSupported());
+        var dataName = gdaUseAstc ? GDA_ASTC_DATA : "{{{ DATA_FILENAME }}}";
+        var entry = GDA_DATA_PARTS && GDA_DATA_PARTS[dataName];
+        window.GDA_report("start", "textures " + (gdaUseAstc ? "ASTC" : "DXT/default") + ", data " + (entry ? entry.parts.length + " parts" : "single file"));
+        if (!entry) { gdaCreate("Build/" + dataName, 0); return; }
+        // Start the code download at the same time (the Unity loader then finds it in the HTTP cache).
+        try { fetch("Build/{{{ FRAMEWORK_FILENAME }}}"); fetch("Build/{{{ CODE_FILENAME }}}"); } catch (e) {}
+        gdaFetchParts(entry, function (f) { gdaShowProgress(0.8 * f); }).then(function (blobUrl) {
+          window.GDA_report("parts", "data joined");
+          gdaCreate(blobUrl, 0.8);
+        }).catch(function (err) {
+          gdaStatus.textContent = "No se pudo descargar el juego. Revisa la conexión y recarga la página.";
+          window.GDA_report("error", "data parts: " + err);
+        });
+      }
+
+      function gdaCreate(dataUrl, base) {
       createUnityInstance(document.querySelector("#unity-canvas"), {
+        // The joined data lives in a blob: URL that changes every visit: never stored in the Unity cache (IndexedDB);
+        // the parts themselves are cached by the browser (Cache-Control: immutable on the host).
+        cacheControl: function (url) { return url.indexOf("blob:") === 0 ? "no-store" : "must-revalidate"; },
         arguments: [],
 #if PROGRESSIVE_ASSET_LOADING
         primaryDataUrls: {{{ JSON.stringify(PRIMARY_DATA_FILES) }}},
         secondaryDataUrls: {{{ JSON.stringify(SECONDARY_DATA_FILES) }}},
 #else
-        dataUrl: "Build/{{{ DATA_FILENAME }}}",
+        dataUrl: dataUrl,
 #endif
         frameworkUrl: "Build/{{{ FRAMEWORK_FILENAME }}}",
 #if USE_WASM
@@ -301,14 +502,30 @@
         productVersion: {{{ JSON.stringify(PRODUCT_VERSION) }}},
         showBanner: unityShowBanner,
       }, function (progress) {
-        document.querySelector("#unity-progress-full").style.width = (100 * progress) + "%";
+        document.querySelector("#unity-progress-full").style.width = Math.round(100 * progress) + "%";
+        gdaShowProgress(base + (1 - base) * progress);
       }).then(function (unityInstance) {
         document.querySelector("#unity-loading").style.display = "none";
         window.unityInstance = unityInstance;
         if (window.GDA_onUnityReady) window.GDA_onUnityReady();
+        gdaBar.style.width = "100%";
+        gdaStatus.textContent = "¡Las leyendas te esperan!";
+        gdaPlay.disabled = false;
+        window.GDA_report("ready", "unity instance created");
+        if (/[?&]gdaAutoPlay=1/.test(location.search)) gdaPlay.click(); // automated tests only
       }).catch(function (message) {
-        alert(message);
+        gdaStatus.textContent = "No se pudo cargar el juego. Recarga la página para intentarlo de nuevo.";
+        window.GDA_report("error", "load failed: " + message);
       });
+      }
+
+      // Start last: every variable above (data parts, ASTC data) is assigned by now.
+      if (!gdaSupported()) {
+        gdaWelcome.classList.add("gda-unsupported");
+        window.GDA_report("unsupported", "WebGL or WebAssembly missing");
+      } else {
+        gdaStart();
+      }
     </script>
   </body>
 </html>

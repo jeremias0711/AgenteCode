@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using TMPro;
@@ -36,9 +36,12 @@ namespace GameDevAgent.UiTools
 
         private const string FontChars =
             " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~" +
-            "¡¿·áéíóúüñÁÉÍÓÚÜÑ";
+            "¡¿·áéíóúüñÁÉÍÓÚÜÑ«»—–…“”‘’ºª°";
 
-        private static TMP_FontAsset fontBold, fontSemi, fontTitle;
+        private const string AncestralesDir = "Assets/UI/Ancestrales";
+
+        private static TMP_FontAsset fontBold, fontSemi, fontTitle, fontBody, fontLogo;
+        private static readonly List<UiSkin.ShadowMaterial> shadowMaterials = new List<UiSkin.ShadowMaterial>();
         private static readonly Dictionary<string, Sprite> sprites = new Dictionary<string, Sprite>();
 
         /// <summary>
@@ -155,6 +158,96 @@ namespace GameDevAgent.UiTools
             EditorApplication.Exit(code);
         }
 
+        /// <summary>
+        /// Phase 18: read-only captures of every migrated screen (nothing is saved): Main Menu, Collection, Level Select
+        /// and, on Test 4, the HUD, placement, pause, pause confirm, upgrade panel, victory and defeat. -gdaOutDir dir
+        /// [-gdaSize 1688x780,1920x1080,...]. Edit mode: the screens are shown by activating their objects.
+        /// </summary>
+        public static void CaptureAncestralesFromCommandLine()
+        {
+            int code = 1;
+            try
+            {
+                string outDir = null, size = "1688x780";
+                string[] args = System.Environment.GetCommandLineArgs();
+                for (int i = 0; i < args.Length - 1; i++)
+                {
+                    if (args[i] == "-gdaOutDir") outDir = args[i + 1];
+                    if (args[i] == "-gdaSize") size = args[i + 1];
+                }
+                if (string.IsNullOrEmpty(outDir)) throw new System.ArgumentException("-gdaOutDir is required");
+                Directory.CreateDirectory(outDir);
+                var shots = new (string name, string scene, System.Action setup)[]
+                {
+                    ("menu", MainMenuScenePath, null),
+                    ("coleccion", MainMenuScenePath, () =>
+                    {
+                        CollectionController c = Object.FindAnyObjectByType<CollectionController>(FindObjectsInactive.Include);
+                        foreach (GameObject go in c.hideWhileOpen) if (go != null) go.SetActive(false);
+                        c.gameObject.SetActive(true);
+                        c.BuildPreview();
+                    }),
+                    ("niveles", LevelSelectScenePath, null),
+                    ("hud", "Assets/Course/Scenes/Test 4.unity", () =>
+                    {
+                        Transform canvas = Object.FindAnyObjectByType<UIController>(FindObjectsInactive.Include).transform;
+                        Transform banner = FindDeep(canvas, "Wave Banner");
+                        if (banner != null) banner.gameObject.SetActive(true);
+                        Transform wave = FindDeep(canvas, "Wave Text");
+                        if (wave != null) wave.gameObject.SetActive(true);
+                    }),
+                    ("colocacion", "Assets/Course/Scenes/Test 4.unity", () =>
+                    {
+                        PlacementHintView v = Object.FindAnyObjectByType<PlacementHintView>(FindObjectsInactive.Include);
+                        v.panel.SetActive(true);
+                        v.message.text = "toca una casilla para invocar a la madremonte";
+                        v.cancelButton.SetActive(true);
+                        TowerCardView card = Object.FindObjectsByType<TowerCardView>(FindObjectsInactive.Include, FindObjectsSortMode.None)
+                            .FirstOrDefault(cv => cv.displayName.Contains("madre"));
+                        if (card != null && card.selectedFrame != null) card.selectedFrame.SetActive(true);
+                    }),
+                    ("pausa", "Assets/Course/Scenes/Test 4.unity", () => ShowScreen("Pause Screen", null)),
+                    ("pausa_confirmar", "Assets/Course/Scenes/Test 4.unity", () => ShowScreen("Pause Screen", "Confirm")),
+                    ("mejora", "Assets/Course/Scenes/Test 4.unity", () => ShowScreen("Tower Upgrade Panel", null)),
+                    ("victoria", "Assets/Course/Scenes/Test 4.unity", () => ShowScreen("Level Complete", null)),
+                    ("derrota", "Assets/Course/Scenes/Test 4.unity", () => ShowScreen("Level Failed", null)),
+                };
+                foreach (string sz in size.Split(','))
+                {
+                    string[] wh = sz.Split('x');
+                    int w = int.Parse(wh[0]), h = int.Parse(wh[1]);
+                    foreach (var shot in shots)
+                    {
+                        UnityEditor.SceneManagement.EditorSceneManager.OpenScene(shot.scene, UnityEditor.SceneManagement.OpenSceneMode.Single);
+                        shot.setup?.Invoke();
+                        RenderOverlays(System.IO.Path.Combine(outDir, shot.name + "_" + w + "x" + h + ".png"), w, h);
+                    }
+                }
+                code = 0;
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError(Tag + "Capture failed: " + e);
+            }
+            EditorApplication.Exit(code);
+        }
+
+        private static void ShowScreen(string name, string extra)
+        {
+            Transform canvas = Object.FindAnyObjectByType<UIController>(FindObjectsInactive.Include).transform;
+            Transform t = FindDeep(canvas, name);
+            if (t == null) return;
+            t.gameObject.SetActive(true);
+            for (Transform p = t.parent; p != null && p != canvas; p = p.parent) p.gameObject.SetActive(true);
+            if (extra != null)
+            {
+                Transform x = FindDeep(t, extra);
+                if (x != null) x.gameObject.SetActive(true);
+                Transform footer = FindDeep(t, "Footer");
+                if (footer != null) footer.gameObject.SetActive(false);
+            }
+        }
+
         private static void RenderOverlays(string path, int width, int height)
         {
             Camera cam = Camera.main;
@@ -198,10 +291,11 @@ namespace GameDevAgent.UiTools
                 CreatePanelSprites();
                 ImportPngSprites(IconDir);
                 ImportPngSprites(OrnamentDir);
+                ImportAncestrales();
                 CreateSkin();
                 CreateCollectionAssets();
                 AssetDatabase.SaveAssets();
-                return SkinPrefab() && SkinMainMenu() && SkinLevelSelect();
+                return SkinPrefab() && RevertHudLayoutOverrides() && SkinMainMenu() && SkinLevelSelect();
             }
             catch (System.Exception e)
             {
@@ -212,11 +306,43 @@ namespace GameDevAgent.UiTools
 
         // ------------------------------------------------------------------ fonts
 
+        // Phase 18 (Figma "Ancestrales", Tipografía): Oswald SemiBold = buttons and data, Alegreya Sans Bold = labels,
+        // Alegreya SC ExtraBold = titles and ribbons, Alegreya Sans Medium = body, Cinzel Decorative Black = brand only.
         private static void CreateFonts()
         {
-            fontBold = FontAsset("Fredoka-Bold");
-            fontSemi = FontAsset("Fredoka-SemiBold");
-            fontTitle = FontAsset("MedievalSharp-Regular");
+            fontBold = FontAsset("Oswald-SemiBold");
+            fontSemi = FontAsset("AlegreyaSans-Bold");
+            fontTitle = FontAsset("AlegreyaSC-ExtraBold");
+            fontBody = FontAsset("AlegreyaSans-Medium");
+            fontLogo = FontAsset("CinzelDecorative-Black");
+            shadowMaterials.Clear();
+            foreach (var f in new[] { (fontBold, "Oswald-SemiBold"), (fontSemi, "AlegreyaSans-Bold"), (fontTitle, "AlegreyaSC-ExtraBold"), (fontLogo, "CinzelDecorative-Black") })
+            {
+                shadowMaterials.Add(new UiSkin.ShadowMaterial { font = f.Item1, material = ShadowMaterial(f.Item1, f.Item2) });
+            }
+        }
+
+        // "text-shadow: 0 2px 0 tinta" of the design: same atlas, TMP underlay.
+        private static Material ShadowMaterial(TMP_FontAsset font, string file)
+        {
+            string path = FontDir + "/" + file + " Shadow.mat";
+            Material m = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (m == null)
+            {
+                m = new Material(font.material);
+                AssetDatabase.CreateAsset(m, path);
+            }
+            m.shader = font.material.shader;
+            m.CopyPropertiesFromMaterial(font.material);
+            m.name = file + " Shadow";
+            m.EnableKeyword("UNDERLAY_ON");
+            m.SetColor("_UnderlayColor", new Color(0.08f, 0.10f, 0.09f, 0.9f));
+            m.SetFloat("_UnderlayOffsetX", 0f);
+            m.SetFloat("_UnderlayOffsetY", -0.35f); // stays inside the 5 px SDF padding of the atlas (no clipped glyphs)
+            m.SetFloat("_UnderlayDilate", 0f);
+            m.SetFloat("_UnderlaySoftness", 0f);
+            EditorUtility.SetDirty(m);
+            return m;
         }
 
         private static TMP_FontAsset FontAsset(string file)
@@ -226,6 +352,17 @@ namespace GameDevAgent.UiTools
             if (existing != null && existing.atlasPopulationMode == AtlasPopulationMode.Static
                 && existing.characterTable.Count > 0)
             {
+                // Glyphs added to FontChars later ("…" inserted by TMP ellipsis, "º"...) are baked into the static atlas;
+                // a missing glyph would otherwise make TMP fall back to LiberationSans in an extra sub-mesh.
+                if (!existing.HasCharacters(FontChars, out List<char> missingChars) && missingChars != null && missingChars.Count > 0)
+                {
+                    existing.atlasPopulationMode = AtlasPopulationMode.Dynamic;
+                    existing.TryAddCharacters(new string(missingChars.ToArray()), out string notInFont);
+                    existing.atlasPopulationMode = AtlasPopulationMode.Static;
+                    EditorUtility.SetDirty(existing);
+                    if (existing.atlasTextures.Length > 0) EditorUtility.SetDirty(existing.atlasTextures[0]);
+                    Debug.Log(Tag + file + ": added " + (missingChars.Count - (notInFont ?? "").Length) + " glyph(s); not in the font: '" + notInFont + "'");
+                }
                 return existing;
             }
             if (existing != null)
@@ -240,7 +377,8 @@ namespace GameDevAgent.UiTools
                 throw new System.Exception("Missing font file " + FontDir + "/" + file + ".ttf");
             }
 
-            TMP_FontAsset asset = TMP_FontAsset.CreateFontAsset(font, 64, 6, GlyphRenderMode.SDFAA, 1024, 1024,
+            // 48 pt sampling on a 512x1024 atlas: every glyph of FontChars fits, and the WebGL build stays light.
+            TMP_FontAsset asset = TMP_FontAsset.CreateFontAsset(font, 48, 5, GlyphRenderMode.SDFAA, 512, 1024,
                 AtlasPopulationMode.Dynamic, false);
             asset.name = file + " SDF";
             AssetDatabase.CreateAsset(asset, assetPath);
@@ -279,12 +417,33 @@ namespace GameDevAgent.UiTools
             public float softY, softBlur, softAlpha; // soft drop shadow ("Panel hueso")
             public bool ringOnly;        // only the 4 px gold ring, transparent body (selection overlay)
             public float exactW, exactH; // fixed body size (circles, badges): used as Simple sprites, no 9-slice
+            public Color? borderColor;   // default: tinta
         }
 
         private static PanelSpec Exact(string name, Color fill, float size, float border, bool glow = false, float pad = 0f)
         {
             return new PanelSpec { name = name, fill = fill, radius = size * 0.5f, border = border, exactW = size, exactH = size,
                 glow = glow, pad = pad };
+        }
+
+        // Phase 18: flat panel with a coloured border (HUD pills, cost tag, El Olvido notice).
+        private static PanelSpec Bordered(string name, Color fill, float radius, float border, Color borderColor)
+        {
+            return new PanelSpec { name = name, fill = fill, radius = radius, border = border, borderColor = borderColor };
+        }
+
+        // "Panel flotante" (drop shadow 0 10 24) for the parchment window and the dark carved panel.
+        private static PanelSpec Floating(string name, Color fill, float radius, float softY, float softBlur, float softAlpha)
+        {
+            return new PanelSpec { name = name, fill = fill, radius = radius, border = 3f, pad = 20f,
+                softY = softY, softBlur = softBlur, softAlpha = softAlpha };
+        }
+
+        // "Nodo de nivel" stone (60 px, "Relieve tallado": 4 px ink drop + 2 px inner light).
+        private static PanelSpec Stone(string name, Color fill, float border, Color borderColor, bool glow)
+        {
+            return new PanelSpec { name = name, fill = fill, radius = 30f, border = border, borderColor = borderColor,
+                exactW = 60f, exactH = 60f, drop = !glow, glow = glow, hiPx = glow ? 0f : 2f, hiAlpha = 0.25f, pad = 4f };
         }
 
         private static PanelSpec Relief(string name, Color fill, float radius, float pad = 0f, bool glow = false)
@@ -301,51 +460,65 @@ namespace GameDevAgent.UiTools
         private static void CreatePanelSprites()
         {
             Directory.CreateDirectory(SpriteDir);
+            // Phase 18: the same sprite names as the "v2 · Bosque" system (runtime screens look them up by name), redrawn
+            // with the "Ancestrales" tokens and component specs of the Figma file.
+            Color dark90 = HudTheme.HudPill;
             var specs = new List<PanelSpec>
             {
-                Relief("panel_surface", HudTheme.Surface, 14f),           // gold pill, placement hint
-                Flat("panel_deep", HudTheme.PanelDeep, 14f, 3f),          // wave indicator
-                Flat("tray_deep", HudTheme.PanelDeep, 20f, 3f),           // tower tray
-                Flat("pill_deep", HudTheme.PanelDeep, 12f, 0f),           // wave banner subtitle
-                Relief("button_primary", HudTheme.Primary, 10f),          // square button (pause)
-                Relief("plate_surface", HudTheme.Surface, 8f),            // plate body ("cancelar")
+                // HUD (E · Partida).
+                Bordered("hud_pill", dark90, 20f, 2f, HudTheme.Stone),            // Vida del libro, Ecos, oleada
+                Bordered("notice_dark", HudTheme.OblivionBlack, 14f, 2f, HudTheme.Muted), // Aviso de oleada
+                Flat("instr_pill", new Color(dark90.r, dark90.g, dark90.b, 0.85f), 14f, 0f), // Instrucción
+                Bordered("cost_tag", new Color(dark90.r, dark90.g, dark90.b, 0.92f), 10f, 1.5f, HudTheme.Gold), // Costo
+                new PanelSpec { name = "sel_frame", fill = HudTheme.Gold, radius = 8f, pad = 4f, ringOnly = true }, // Guardián seleccionado
+                Bordered("name_plate", HudTheme.Surface, 6f, 2f, HudTheme.Contour), // Placa of the guardian card
+                Bordered("info_circle", HudTheme.Muted, 18f, 1.75f, HudTheme.Contour),
+                // Collection cards ("Tarjeta coleccionable": Desbloqueada / Seleccionada / Bloqueada) and the art mask.
+                Bordered("coll_card", HudTheme.Contour, 12f, 3f, HudTheme.Gold),
+                new PanelSpec { name = "coll_card_viewed", fill = HudTheme.Contour, radius = 12f, border = 3f, borderColor = HudTheme.Gold, glow = true, pad = 4f },
+                Bordered("coll_card_locked", HudTheme.OblivionBlack, 12f, 3f, HudTheme.Muted),
+                Flat("coll_art", HudTheme.Contour, 9f, 0f),
+                // Panels and windows.
+                Floating("panel_bone", HudTheme.Surface, 22f, 8f, 14f, 0.7f),     // Ventana emergente / Pergamino
+                Floating("panel_teal", HudTheme.PanelDeep, 22f, 10f, 24f, 0.55f), // Panel / Tallado oscuro
+                Relief("icon_frame", HudTheme.Contour, 10f),                      // Botón ícono
+                // Level nodes ("Nodo de nivel": Completado / Actual / Bloqueado) and the selection ring.
+                Stone("level_card", HudTheme.Primary, 3f, HudTheme.Contour, false),
+                Stone("level_next", HudTheme.Gold, 4f, HudTheme.Gold, true),
+                Stone("level_locked", HudTheme.Muted, 3f, HudTheme.Contour, false),
+                new PanelSpec { name = "level_ring", fill = HudTheme.Gold, radius = 30f, pad = 4f, ringOnly = true, exactW = 60f, exactH = 60f },
+                // Earlier names, restyled.
+                Bordered("panel_surface", HudTheme.Surface, 14f, 2f, HudTheme.Contour),
+                Bordered("panel_deep", dark90, 20f, 2f, HudTheme.Stone),
+                Flat("tray_deep", HudTheme.PanelDeep, 20f, 3f),
+                Flat("pill_deep", dark90, 14f, 0f),
+                Relief("button_primary", HudTheme.Primary, 10f),
+                Relief("plate_surface", HudTheme.Surface, 8f),
                 Relief("card_normal", HudTheme.Surface, 12f, 4f),
                 Relief("card_selected", HudTheme.Primary, 12f, 4f, true),
-                Relief("card_nogold", HudTheme.Panel, 12f, 4f),
-                Flat("bar_track", HudTheme.Panel, 7f, 2f),
-                Flat("bar_fill", HudTheme.Primary, 5f, 0f),
+                Relief("card_nogold", HudTheme.Muted, 12f, 4f),
+                Bordered("bar_track", HudTheme.Hex(0x17201E), 7f, 2f, HudTheme.Stone),
+                Flat("bar_fill", HudTheme.Hex(0x5DAE84), 5f, 0f),                 // book green of the art sheet
                 Flat("shine", HudTheme.SurfaceLight, 2f, 0f),
-                new PanelSpec { name = "ribbon_band", fill = HudTheme.Primary, radius = 6f, border = 3f,
-                    hiPx = 4f, hiAlpha = 0.30f, loPx = 5f, loAlpha = 0.40f },
-                Relief("plate_primary", HudTheme.Primary, 8f),            // main plate ("nueva partida", "continuar")
+                Relief("plate_primary", HudTheme.Primary, 8f),
                 Flat("shine_primary", HudTheme.PrimaryLight, 2f, 0f),
-                Flat("brand_deep", HudTheme.PanelDeep, 24f, 3f),          // main menu brand block
-                Relief("level_card", HudTheme.Surface, 14f),              // level select cards ("Nivel v2"): completado
-                Relief("level_next", HudTheme.Primary, 14f),              // siguiente
-                Relief("level_locked", HudTheme.Panel, 14f),              // bloqueado
-                new PanelSpec { name = "level_ring", fill = HudTheme.Gold, radius = 14f, pad = 4f, ringOnly = true },
-                Flat("detail_deep", HudTheme.PanelDeep, 22f, 3f),         // level detail panel
-                Relief("button_panel", HudTheme.Panel, 10f),              // square button, panel colour (back)
-                new PanelSpec { name = "panel_bone", fill = HudTheme.Surface, radius = 22f, border = 4f, pad = 20f,
-                    loPx = 6f, loAlpha = 1f, loColor = HudTheme.BoneShade,
-                    softY = 8f, softBlur = 18f, softAlpha = 0.55f },     // pause overlay
-                // Collection (P6) and tutorial (P2).
-                Relief("card_light", HudTheme.SurfaceLight, 12f, 4f),     // collectible: conseguido
-                Exact("circle_surface", HudTheme.Surface, 42f, 2.5f),     // collectible portrait
-                Exact("circle_dark", HudTheme.Hex(0x5C544C), 42f, 2.5f),  // portrait of the viewed card (acento oscuro)
-                Exact("circle_deep", HudTheme.PanelDeep, 42f, 2.5f),      // portrait of a locked card
-                Exact("portrait_big", HudTheme.Primary, 78f, 4f, true, 4f), // sheet portrait with gold ring
+                Flat("brand_deep", HudTheme.PanelDeep, 22f, 3f),                  // used without outsets: no shadow pad
+                Flat("detail_deep", HudTheme.PanelDeep, 22f, 3f),
+                Relief("button_panel", HudTheme.Panel, 10f),
+                Relief("card_light", HudTheme.Surface, 12f, 4f),
+                Exact("circle_surface", HudTheme.Surface, 42f, 2.5f),
+                Exact("circle_dark", HudTheme.Stone, 42f, 2.5f),
+                Exact("circle_deep", HudTheme.PanelDeep, 42f, 2.5f),
+                Bordered("portrait_big", HudTheme.Contour, 12f, 3f, HudTheme.Gold), // art frame (gold edge, ink inside)
                 Exact("badge_done", HudTheme.Primary, 28f, 2f),
-                Exact("badge_todo", HudTheme.Panel, 28f, 2f),
-                Flat("tab_active", HudTheme.Primary, 10f, 3f),
-                Flat("tab_inactive", HudTheme.BoneShade, 10f, 3f),
+                Exact("badge_todo", HudTheme.Muted, 28f, 2f),
+                Flat("tab_active", HudTheme.Primary, 12f, 2.5f),                  // Pestaña marcador · Activa
+                Flat("tab_inactive", HudTheme.Surface, 12f, 2.5f),                // Inactiva
                 Flat("page", HudTheme.Surface, 12f, 2.5f),
-                Flat("chip", HudTheme.Hex(0x638084), 10f, 2f),
+                Bordered("chip", HudTheme.River, 10f, 2f, HudTheme.Contour),      // Insignia de rareza · Rara
                 Flat("lesson_chip", HudTheme.SurfaceLight, 12f, 2.5f),
                 Flat("card_deep16", HudTheme.PanelDeep, 16f, 3f),
-                new PanelSpec { name = "book_deep", fill = HudTheme.PanelDeep, radius = 22f, border = 4f, pad = 20f,
-                    loPx = 6f, loAlpha = 1f, loColor = HudTheme.BoneShade,
-                    softY = 8f, softBlur = 18f, softAlpha = 0.55f },
+                Flat("book_deep", HudTheme.PanelDeep, 22f, 3f),
             };
             foreach (PanelSpec spec in specs)
             {
@@ -401,7 +574,7 @@ namespace GameDevAgent.UiTools
                     if (bodyCov > 0f)
                     {
                         float inner = p.border > 0f ? Cov(sd + p.border) : 1f;
-                        Color body = Color.Lerp(HudTheme.Contour, p.fill, inner);
+                        Color body = Color.Lerp(p.borderColor ?? HudTheme.Contour, p.fill, inner);
                         if (p.hiPx > 0f)
                         {
                             float band = inner * (1f - Cov(SdRound(fx, fy - p.hiPx, l, t, bw, bh, p.radius) + p.border));
@@ -465,6 +638,52 @@ namespace GameDevAgent.UiTools
             return AssetDatabase.LoadAssetAtPath<Sprite>(path);
         }
 
+        /// <summary>
+        /// Phase 18: art of the Figma "Ancestrales" file (Assets/UI/Ancestrales, see its README): crops of the art sheet
+        /// at 1 texel per Figma px, vector layers rendered at 3x or 4x, and the 3-slice carved buttons. Pixels per unit
+        /// follow that density, so 1 Figma px = U canvas units everywhere. Large art is compressed and capped.
+        /// </summary>
+        private static void ImportAncestrales()
+        {
+            var density = new Dictionary<string, float>
+            {
+                { "libro_altar", 3f }, { "rama", 3f }, { "luciernagas", 3f }, { "olvido_humo", 3f }, { "luz_libro", 3f },
+                { "vineta", 3f }, { "fondo_selva", 3f }, { "esquinero", 4f }, { "cinta_punta", 4f },
+            };
+            var borders = new Dictionary<string, Vector4>
+            {
+                { "tallado_musgo", new Vector4(15f, 0f, 15f, 0f) }, { "tallado_madera", new Vector4(13f, 0f, 13f, 0f) },
+                { "tallado_pergamino", new Vector4(11f, 0f, 11f, 0f) }, { "cinta_banda", new Vector4(6f, 6f, 6f, 6f) },
+                { "barra_verde", new Vector4(6f, 0f, 6f, 0f) }, { "barra_oro", new Vector4(6f, 0f, 6f, 0f) },
+                { "barra_pista", new Vector4(12f, 0f, 14f, 0f) },
+            };
+            var maxSize = new Dictionary<string, int> { { "fondo_selva", 2048 }, { "vineta", 512 }, { "luz_libro", 512 } };
+            foreach (string guid in AssetDatabase.FindAssets("t:Texture2D", new[] { AncestralesDir }))
+            {
+                string path = AssetDatabase.GUIDToAssetPath(guid);
+                if (path.Contains("/Editor/")) continue; // the source art sheet never ships
+                string name = System.IO.Path.GetFileNameWithoutExtension(path);
+                float d = density.TryGetValue(name, out float v) ? v : 1f;
+                var importer = (TextureImporter)AssetImporter.GetAtPath(path);
+                importer.textureType = TextureImporterType.Sprite;
+                importer.spriteImportMode = SpriteImportMode.Single;
+                importer.spritePixelsPerUnit = d / U * 100f;
+                importer.spriteBorder = borders.TryGetValue(name, out Vector4 b) ? b : Vector4.zero;
+                importer.mipmapEnabled = false;
+                importer.alphaIsTransparency = true;
+                importer.wrapMode = TextureWrapMode.Clamp;
+                importer.filterMode = FilterMode.Bilinear;
+                bool big = maxSize.ContainsKey(name) || name == "libro_altar" || name == "olvido_humo";
+                importer.maxTextureSize = maxSize.TryGetValue(name, out int m) ? m : 1024;
+                importer.textureCompression = big ? TextureImporterCompression.Compressed : TextureImporterCompression.Uncompressed;
+                importer.SaveAndReimport();
+                sprites[name] = AssetDatabase.LoadAssetAtPath<Sprite>(path);
+            }
+            // The book bar of the art sheet replaces the flat green fill wherever a progress bar is drawn.
+            if (sprites.TryGetValue("barra_verde", out Sprite green) && green != null) sprites["bar_fill"] = green;
+            if (sprites.TryGetValue("res_moneda", out Sprite coin) && coin != null) sprites["icon_coin"] = coin;
+        }
+
         private static void ImportPngSprites(string dir)
         {
             foreach (string guid in AssetDatabase.FindAssets("t:Texture2D", new[] { dir }))
@@ -498,6 +717,9 @@ namespace GameDevAgent.UiTools
             skin.fontBold = fontBold;
             skin.fontSemi = fontSemi;
             skin.fontTitle = fontTitle;
+            skin.fontBody = fontBody;
+            skin.fontLogo = fontLogo;
+            skin.shadowMaterials = new List<UiSkin.ShadowMaterial>(shadowMaterials);
             EditorUtility.SetDirty(skin);
             UiKit.Skin = skin;
         }
@@ -593,6 +815,7 @@ namespace GameDevAgent.UiTools
                 SkinEndScreen(canvas, "Level Failed", "Failed Text", "derrota", "El Olvido alcanzó el libro sagrado",
                     new[] { ("Try Again", "reintentar", true), ("Level Select", "elegir nivel", false), ("Main Menu", "menú", false) });
                 SkinNotEnoughWarning(canvas);
+                CleanTextSubMeshes(canvas);
 
                 PrefabUtility.SaveAsPrefabAsset(root, PrefabPath, out bool saved);
                 Debug.Log(Tag + (saved ? "UI Canvas prefab skinned and saved." : "Could not save the UI Canvas prefab."));
@@ -604,58 +827,131 @@ namespace GameDevAgent.UiTools
             }
         }
 
-        private static void SkinGold(Transform panel)
-        {
-            Place(panel, new Vector2(0f, 1f), new Vector2(32f, -20f) * U, new Vector2(138f * U, 52f * U));
-            SetImage(panel.gameObject, Sp("panel_surface"));
-            var row = Layout<HorizontalLayoutGroup>(panel.gameObject);
-            row.padding = new RectOffset(22, 38, 0, 8);
-            row.spacing = 8f * U;
-            Fit(panel.gameObject, true, false);
+        // ------------------------------------------------------------------ HUD (Figma "Ancestrales" · E · Partida)
 
-            Image coin = Icon(panel, "Coin Icon", Sp("icon_coin"), 30f * U, Color.white);
-            coin.transform.SetSiblingIndex(0);
-            TMP_Text value = Child(panel, "Gold Value", true).GetComponent<TMP_Text>();
-            Style(value, fontBold, 24f * U, HudTheme.Contour, TextAlignmentOptions.Left);
-            value.rectTransform.sizeDelta = new Vector2(value.rectTransform.sizeDelta.x, 26f * U);
-            value.transform.SetSiblingIndex(1);
-            TMP_Text label = Child(panel, "Gold Label", true).GetComponent<TMP_Text>();
-            Style(label, fontSemi, 17f * U, HudTheme.Contour, TextAlignmentOptions.Left);
-            label.rectTransform.sizeDelta = new Vector2(label.rectTransform.sizeDelta.x, 22f * U);
-            label.text = "oro";
-            label.transform.SetSiblingIndex(2);
+        // Top-left pills, left to right (Figma px from the top-left corner of the 844x390 frame). The oleada pill also
+        // carries the enemies bar of the wave (not in the Figma frame, kept from the game), so the others move right.
+        private const float PillTop = 14f, PillHeight = 40f;
+        private const float WavePillX = 14f, WavePillW = 164f, BookPillX = 186f, BookPillW = 190f, GoldPillX = 384f;
+
+        private static void RemoveLayout(GameObject go)
+        {
+            foreach (LayoutGroup lg in go.GetComponents<LayoutGroup>()) Object.DestroyImmediate(lg);
+            ContentSizeFitter fit = go.GetComponent<ContentSizeFitter>();
+            if (fit != null) Object.DestroyImmediate(fit);
         }
 
+        private static void Hide(Transform parent, params string[] names)
+        {
+            foreach (string n in names)
+            {
+                Transform t = Child(parent, n, false);
+                if (t != null) t.gameObject.SetActive(false);
+            }
+        }
+
+        /// <summary>"Ecos" pill: coin of the art sheet + amount (Oswald 16, ink shadow).</summary>
+        /// <summary>
+        /// Phase 18: the level scenes kept, as prefab-instance overrides, layout values that the old layout groups used to
+        /// drive (anchors / positions / sizes at 0) and old text colours. They would pin the HUD to the old layout. Only
+        /// those overrides (RectTransforms and TMP colour / style inside the UI Canvas instance) are reverted; every other
+        /// per-scene override (unlocked legends, references, active objects) is kept.
+        /// </summary>
+        private static bool RevertHudLayoutOverrides()
+        {
+            GameObject prefabAsset = AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath);
+            Transform sourceRoot = prefabAsset.transform;
+            int scenes = 0, reverted = 0;
+            foreach (EditorBuildSettingsScene s in EditorBuildSettings.scenes)
+            {
+                if (!s.enabled || s.path == MainMenuScenePath || s.path == LevelSelectScenePath) continue;
+                var scene = UnityEditor.SceneManagement.EditorSceneManager.OpenScene(s.path, UnityEditor.SceneManagement.OpenSceneMode.Single);
+                bool dirty = false;
+                foreach (UIController ui in Object.FindObjectsByType<UIController>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+                {
+                    GameObject root = PrefabUtility.GetOutermostPrefabInstanceRoot(ui.gameObject);
+                    if (root == null || PrefabUtility.GetPrefabAssetPathOfNearestInstanceRoot(root) != PrefabPath) continue;
+                    PropertyModification[] mods = PrefabUtility.GetPropertyModifications(root);
+                    if (mods == null) continue;
+                    var keep = new List<PropertyModification>();
+                    foreach (PropertyModification m in mods)
+                    {
+                        bool layout = m.target is RectTransform rt && rt != sourceRoot;
+                        bool textLook = m.target is TMP_Text && (m.propertyPath.StartsWith("m_fontColor") || m.propertyPath == "m_TextStyleHashCode");
+                        if (layout || textLook) reverted++; else keep.Add(m);
+                    }
+                    if (keep.Count != mods.Length)
+                    {
+                        PrefabUtility.SetPropertyModifications(root, keep.ToArray());
+                        dirty = true;
+                    }
+                }
+                if (dirty)
+                {
+                    UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(scene);
+                    UnityEditor.SceneManagement.EditorSceneManager.SaveScene(scene);
+                    scenes++;
+                }
+            }
+            Debug.Log(Tag + "HUD layout overrides reverted: " + reverted + " in " + scenes + " scene(s).");
+            return true;
+        }
+
+        private static void SkinGold(Transform panel)
+        {
+            Place(panel, new Vector2(0f, 1f), new Vector2(GoldPillX, -PillTop) * U, new Vector2(118f, PillHeight) * U);
+            Pill(panel.gameObject).raycastTarget = false;
+            var row = Layout<HorizontalLayoutGroup>(panel.gameObject);
+            row.padding = new RectOffset(Mathf.RoundToInt(1f * U), Mathf.RoundToInt(18f * U), 0, 0);
+            row.spacing = 8f * U;
+            row.childAlignment = TextAnchor.MiddleLeft;
+            Fit(panel.gameObject, true, false);
+
+            Image coin = Icon(panel, "Coin Icon", Sp("res_moneda"), 38f * U, Color.white);
+            coin.transform.SetSiblingIndex(0);
+            TMP_Text value = Child(panel, "Gold Value", true).GetComponent<TMP_Text>();
+            Style(value, fontBold, 16f * U, HudTheme.TextLight, TextAlignmentOptions.Left);
+            Shadowed(value);
+            value.rectTransform.sizeDelta = new Vector2(value.rectTransform.sizeDelta.x, 24f * U);
+            value.transform.SetSiblingIndex(1);
+            TMP_Text label = Child(panel, "Gold Label", true).GetComponent<TMP_Text>();
+            label.text = "oro";
+            label.gameObject.SetActive(false); // the coin says it: the Figma pill shows only the amount
+        }
+
+        /// <summary>Oleada pill: skull of the art sheet, "N/T" (wave of total) and the enemies bar of the wave.</summary>
         private static void BuildWaveStatus(Transform canvas)
         {
             Transform rootT = Child(canvas, "Wave Status", false) ?? NewChild(canvas, "Wave Status").transform;
-            Place(rootT, new Vector2(0.5f, 1f), new Vector2(0f, -20f * U), new Vector2(266f * U, 48f * U));
+            Place(rootT, new Vector2(0f, 1f), new Vector2(WavePillX, -PillTop) * U, new Vector2(WavePillW, PillHeight) * U);
             var view = GetOrAdd<WaveStatusView>(rootT.gameObject);
 
             Transform pill = Child(rootT, "Pill", false) ?? NewChild(rootT, "Pill").transform;
-            Place(pill, new Vector2(0.5f, 1f), Vector2.zero, new Vector2(266f * U, 48f * U));
-            SetImage(pill.gameObject, Sp("panel_deep"));
-            var row = Layout<HorizontalLayoutGroup>(pill.gameObject);
-            row.padding = new RectOffset(30, 38, 0, 0);
-            row.spacing = 10f * U;
-            Fit(pill.gameObject, true, false);
+            RemoveLayout(pill.gameObject);
+            Place(pill, new Vector2(0f, 1f), Vector2.zero, new Vector2(WavePillW, PillHeight) * U);
+            Pill(pill.gameObject).raycastTarget = false;
 
-            Icon(pill, "Skull Icon", Sp("icon_skull"), 24f * U, HudTheme.TextLight);
-            TMP_Text label = Text(pill, "Wave Label", "oleada 1", fontBold, 18f * U, HudTheme.TextLight);
+            Image skull = Icon(pill, "Skull Icon", Sp("res_calavera"), 36f * U, Color.white);
+            Corner(skull.rectTransform, new Vector2(0f, 0.5f), new Vector2(2f * U, 0f), new Vector2(36f, 36f) * U, new Vector2(0f, 0.5f));
+            TMP_Text label = Text(pill, "Wave Label", "1/3", fontBold, 17f * U, HudTheme.TextLight);
+            Shadowed(label);
+            Corner(label.rectTransform, new Vector2(0f, 0.5f), new Vector2(42f * U, 1f * U), new Vector2(46f, 24f) * U, new Vector2(0f, 0.5f));
 
             Transform track = Child(pill, "Bar", false) ?? NewChild(pill, "Bar").transform;
-            SetImage(track.gameObject, Sp("bar_track"));
-            Element(track.gameObject, 84f * U, 14f * U);
+            SetImage(track.gameObject, Sp("bar_track")).raycastTarget = false;
+            Corner((RectTransform)track, new Vector2(0f, 0.5f), new Vector2(90f * U, 0f), new Vector2(42f, 12f) * U, new Vector2(0f, 0.5f));
             Transform fill = Child(track, "Fill", false) ?? NewChild(track, "Fill").transform;
             var fillRect = (RectTransform)fill;
-            fillRect.anchorMin = new Vector2(0f, 0.5f);
-            fillRect.anchorMax = new Vector2(0f, 0.5f);
+            fillRect.anchorMin = fillRect.anchorMax = new Vector2(0f, 0.5f);
             fillRect.pivot = new Vector2(0f, 0.5f);
             fillRect.anchoredPosition = new Vector2(2f * U, 0f);
-            fillRect.sizeDelta = new Vector2(0f, 10f * U);
-            SetImage(fill.gameObject, Sp("bar_fill"));
+            fillRect.sizeDelta = new Vector2(0f, 8f * U);
+            Image fillImg = SetImage(fill.gameObject, Sp("barra_oro"));
+            fillImg.pixelsPerUnitMultiplier = 17f / 8f;
+            fillImg.raycastTarget = false;
 
-            TMP_Text count = Text(pill, "Wave Count", "0/0", fontSemi, 13f * U, HudTheme.Surface);
+            TMP_Text count = Text(pill, "Wave Count", "0/0", fontBold, 11f * U, HudTheme.Surface); // data: Oswald (lining digits)
+            Corner(count.rectTransform, new Vector2(0f, 0.5f), new Vector2(136f * U, 0f), new Vector2(26f, 16f) * U, new Vector2(0f, 0.5f));
             rootT.SetSiblingIndex(Child(canvas, "Gold Panel", true).GetSiblingIndex() + 1);
 
             view.content = pill.gameObject;
@@ -664,51 +960,54 @@ namespace GameDevAgent.UiTools
             view.countLabel = count;
         }
 
+        /// <summary>Pause: the framed pause icon of the art sheet (Figma "Botón de ícono · Pausa"), top-right corner.</summary>
         private static void SkinPause(Transform button)
         {
-            Place(button, new Vector2(1f, 1f), new Vector2(-32f, -20f) * U, new Vector2(48f * U, 52f * U));
-            SetImage(button.gameObject, Sp("button_primary"));
-            NeutralTint(button.GetComponent<Button>());
-            Transform oldLabel = Child(button, "Text (TMP)", false);
-            if (oldLabel != null) oldLabel.gameObject.SetActive(false);
-            Image icon = Icon(button, "Pause Icon", Sp("icon_pause"), 24f * U, HudTheme.TextLight);
-            Center(icon.rectTransform, new Vector2(0f, 2f * U));
+            Place(button, new Vector2(1f, 1f), new Vector2(-14f, -10f) * U, new Vector2(58f, 53f) * U);
+            Baked(button, "ico_pausa", 58f, 53f, "pausa");
         }
 
+        /// <summary>
+        /// "Aviso de oleada" (Figma Notificación · Olvido): olvido-black card with a grey info circle, the course wave
+        /// text as its title ("¡oleada N!", written by EnemyWaveSpawner) and "El Olvido se acerca · N enemigos" below.
+        /// Shown at the start of each wave, top-right, left of the pause button. Never receives raycasts.
+        /// </summary>
         private static void SkinWaveBanner(Transform canvas, Transform waveText)
         {
-            const float top = -96f * U;
+            const float right = 84f, top = 10f, w = 236f, h = 59f;
             Transform banner = Child(canvas, "Wave Banner", false) ?? NewChild(canvas, "Wave Banner").transform;
-            Place(banner, new Vector2(0.5f, 1f), new Vector2(0f, top), new Vector2(260f * U, 56f * U));
+            Place(banner, new Vector2(1f, 1f), new Vector2(-right, -top) * U, new Vector2(w, h) * U);
+            Hide(banner, "Tail Left", "Tail Right", "Band");
+            Image card = Pill(banner.gameObject, "notice_dark");
+            card.raycastTarget = false;
 
-            Image tailL = Img(banner, "Tail Left", Sp("ribbon_tail_left"));
-            Corner(tailL.rectTransform, new Vector2(0f, 1f), new Vector2(-26f * U, -14f * U), new Vector2(44f, 40f) * U);
-            Image tailR = Img(banner, "Tail Right", Sp("ribbon_tail_right"));
-            Corner(tailR.rectTransform, new Vector2(1f, 1f), new Vector2(26f * U, -14f * U), new Vector2(44f, 40f) * U);
-            Image band = Img(banner, "Band", Sp("ribbon_band"));
-            band.type = Image.Type.Sliced;
-            var bandRect = band.rectTransform;
-            bandRect.anchorMin = new Vector2(0f, 1f);
-            bandRect.anchorMax = new Vector2(1f, 1f);
-            bandRect.pivot = new Vector2(0.5f, 1f);
-            bandRect.anchoredPosition = new Vector2(0f, -3f * U);
-            bandRect.sizeDelta = new Vector2(0f, 46f * U);
+            Image circle = Img(banner, "Info", Sp("info_circle"));
+            circle.type = Image.Type.Sliced;
+            Corner(circle.rectTransform, new Vector2(0f, 0.5f), new Vector2(9f * U, 0f), new Vector2(37f, 37f) * U, new Vector2(0f, 0.5f));
+            TMP_Text glyph = Text(circle.transform, "Glyph", "i", fontTitle, 20f * U, HudTheme.Contour);
+            glyph.alignment = TextAlignmentOptions.Center;
+            Stretch(glyph.rectTransform, new Vector4(0f, 2f * U, 0f, 0f));
 
             Transform sub = Child(banner, "Subtitle", false) ?? NewChild(banner, "Subtitle").transform;
-            Place(sub, new Vector2(0.5f, 1f), new Vector2(0f, -62f * U), new Vector2(200f * U, 34f * U));
-            SetImage(sub.gameObject, Sp("pill_deep"));
-            var subRow = Layout<HorizontalLayoutGroup>(sub.gameObject);
-            subRow.padding = new RectOffset(28, 28, 12, 12);
-            Fit(sub.gameObject, true, true);
-            TMP_Text subText = Text(sub, "Subtitle Text", "12 enemigos", fontSemi, 17f * U, HudTheme.Gold);
+            RemoveLayout(sub.gameObject);
+            Image oldPill = sub.GetComponent<Image>();
+            if (oldPill != null) Object.DestroyImmediate(oldPill);
+            Corner((RectTransform)sub, new Vector2(0f, 0f), new Vector2(56f * U, 10f * U), new Vector2(w - 66f, 16f) * U, new Vector2(0f, 0f));
+            TMP_Text subText = Text(sub, "Subtitle Text", "El Olvido se acerca · 12 enemigos", fontBody, 11f * U, HudTheme.TextLight);
+            subText.alpha = 0.85f;
+            subText.enableAutoSizing = true;
+            subText.fontSizeMin = 8f * U;
+            subText.fontSizeMax = 11f * U;
+            Stretch(subText.rectTransform, Vector4.zero);
 
-            banner.SetSiblingIndex(waveText.GetSiblingIndex()); // right before the text: drawn behind it
+            banner.SetSiblingIndex(waveText.GetSiblingIndex());
+            waveText.SetSiblingIndex(banner.GetSiblingIndex() + 1); // the text is always drawn over the card (also on reruns)
             banner.gameObject.SetActive(false);
 
             TMP_Text text = waveText.GetComponent<TMP_Text>();
-            Place(waveText, new Vector2(0.5f, 1f), new Vector2(0f, top - 3f * U), new Vector2(260f * U, 46f * U));
-            Style(text, fontTitle, 26f * U, HudTheme.TextLight, TextAlignmentOptions.Center);
-            text.margin = new Vector4(0f, 0f, 0f, 4f * U);
+            Place(waveText, new Vector2(1f, 1f), new Vector2(-(right + 10f), -(top + 10f)) * U, new Vector2(w - 66f, 20f) * U);
+            Style(text, fontTitle, 14f * U, HudTheme.Muted, TextAlignmentOptions.Left);
+            text.characterSpacing = 2f;
             text.text = "¡oleada 1!";
 
             var view = GetOrAdd<WaveBannerView>(waveText.gameObject);
@@ -717,46 +1016,42 @@ namespace GameDevAgent.UiTools
             view.subtitleText = subText;
         }
 
+        /// <summary>
+        /// Guardian tray (Figma E: four portrait cards in the bottom-left corner, costs on gold-edged tags, a gold frame on
+        /// the chosen one). No panel behind the cards: the space between them belongs to the map.
+        /// </summary>
         private static RectTransform SkinTray(Transform tray)
         {
-            Place(tray, new Vector2(0.5f, 0f), new Vector2(0f, 14f * U), new Vector2(408f * U, 108f * U));
-            SetImage(tray.gameObject, Sp("tray_deep"));
+            Place(tray, new Vector2(0f, 0f), new Vector2(12f, 2f) * U, new Vector2(384f, 132f) * U);
+            Image trayImage = GetOrAdd<Image>(tray.gameObject);
+            trayImage.sprite = null;
+            trayImage.color = new Color(1f, 1f, 1f, 0f);
+            trayImage.raycastTarget = false; // taps between the cards reach the map
             var row = Layout<HorizontalLayoutGroup>(tray.gameObject);
-            row.padding = new RectOffset(18, 18, 18, 14);
-            row.spacing = 2f * U;
-            row.childAlignment = TextAnchor.UpperCenter;
+            row.padding = new RectOffset(0, 0, 0, 0);
+            row.spacing = 6f * U;
+            row.childAlignment = TextAnchor.LowerLeft;
             row.childControlWidth = false;
             row.childControlHeight = false;
-            row.childForceExpandWidth = false;
-            row.childForceExpandHeight = false;
-            Fit(tray.gameObject, true, false); // levels that unlock fewer towers get a narrower tray
+            Fit(tray.gameObject, true, false); // levels that unlock fewer legends get a narrower tray
 
             foreach (TowerButton towerButton in tray.GetComponentsInChildren<TowerButton>(true))
             {
                 SkinCard(towerButton);
             }
-
-            // Phase 12.2: the vine follows the tray width (1 to 4 cards: Test 1-3 unlock fewer legends). It is tiled at its
-            // natural size, so it never stretches nor overflows the tray; it used to be a fixed 320 px strip offset by -24 px.
-            Image vine = Img(tray, "Vine", Sp("vine"));
-            Ignore(vine.gameObject);
-            vine.type = Image.Type.Tiled;
-            vine.raycastTarget = false;
-            RectTransform vr = vine.rectTransform;
-            vr.anchorMin = new Vector2(0f, 1f);
-            vr.anchorMax = new Vector2(1f, 1f);
-            vr.pivot = new Vector2(0.5f, 1f);
-            vr.sizeDelta = new Vector2(-24f * U, 30f * U); // 12 px inside each tray edge
-            vr.anchoredPosition = new Vector2(0f, 14f * U);
-            CornerOrnament(tray, "Corner TL", new Vector2(0f, 1f), 0f);
-            CornerOrnament(tray, "Corner TR", new Vector2(1f, 1f), -90f);
-            CornerOrnament(tray, "Corner BR", new Vector2(1f, 0f), 180f);
-            CornerOrnament(tray, "Corner BL", new Vector2(0f, 0f), 90f);
-            Image mushrooms = Img(tray, "Mushrooms", Sp("mushrooms"));
-            Ignore(mushrooms.gameObject);
-            Corner(mushrooms.rectTransform, new Vector2(0f, 0f), new Vector2(-50f * U, 3f * U), new Vector2(64.8f, 43.2f) * U, new Vector2(0f, 0f));
-            mushrooms.transform.SetAsLastSibling();
+            Hide(tray, "Vine", "Corner TL", "Corner TR", "Corner BR", "Corner BL", "Mushrooms");
             return (RectTransform)tray;
+        }
+
+        private static string PortraitOf(LegendId legend)
+        {
+            switch (legend.ToString().ToLowerInvariant())
+            {
+                case "madremonte": return "carta_madremonte";
+                case "hojarasquin": return "carta_hojarasquin";
+                case "patasola": return "carta_patasola";
+                default: return "carta_mohan";
+            }
         }
 
         private static void SkinCard(TowerButton towerButton)
@@ -765,62 +1060,87 @@ namespace GameDevAgent.UiTools
             var rect = (RectTransform)card;
             rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0.5f);
             rect.pivot = new Vector2(0.5f, 0.5f);
-            rect.sizeDelta = new Vector2(96f, 92f) * U; // 88x80 card + 4 px glow padding + 4 px drop shadow
+            rect.sizeDelta = new Vector2(90f, 132f) * U; // 90x116 card + the cost tag that rises 16 px above it
             rect.localScale = Vector3.one;
-            Image bg = SetImage(card.gameObject, Sp("card_normal"));
-            NeutralTint(card.GetComponent<Button>());
-
-            Transform oldLabel = Child(card, "Text (TMP)", false);
-            if (oldLabel != null) oldLabel.gameObject.SetActive(false);
+            Image hit = GetOrAdd<Image>(card.gameObject);
+            hit.sprite = null;
+            hit.color = new Color(1f, 1f, 1f, 0f);
+            hit.raycastTarget = true;
+            DisableMeshEffects(card.gameObject);
+            Hide(card, "Text (TMP)", "Icon");
+            Transform oldCost = Child(card, "Cost", false);
+            if (oldCost != null) Object.DestroyImmediate(oldCost.gameObject);
 
             string key = card.name.ToLowerInvariant();
-            string iconName = key.Contains("slow") ? "icon_slow" : key.Contains("bomb") ? "icon_bomb"
-                : key.Contains("triple") ? "icon_triple" : "icon_cannon";
-            // Phase 11: the card shows the legend that represents the defender ("mohán", "madremonte"...).
             LegendId legend = LegendRoster.TryGet(towerButton.towerToPlace, out LegendId found)
                 ? found : LegendRoster.FromTowerName(key);
             string display = LegendRoster.CardName(legend);
+            Sprite art = Sp(PortraitOf(legend));
 
-            Image icon = Icon(card, "Icon", Sp(iconName), 28f * U, HudTheme.Contour);
-            Center(icon.rectTransform, new Vector2(0f, 21f * U));
-            TMP_Text name = Text(card, "Name", display, fontBold, 15f * U, HudTheme.Contour);
-            name.alignment = TextAlignmentOptions.Center;
-            name.enableAutoSizing = true; // "hojarasquín" / "madremonte" fit the 88 px card
-            name.fontSizeMin = 10f * U;
-            name.fontSizeMax = 15f * U;
-            name.textWrappingMode = TextWrappingModes.NoWrap;
-            Center(name.rectTransform, new Vector2(0f, -3.5f * U), new Vector2(88f * U, 17f * U));
+            Image portrait = Img(card, "Portrait", art);
+            Corner(portrait.rectTransform, new Vector2(0.5f, 0f), Vector2.zero, new Vector2(90f, 116f) * U, new Vector2(0.5f, 0f));
+            portrait.raycastTarget = false;
+            DropShadow(portrait);
+            Image frame = Img(card, "Selected Frame", Sp("sel_frame"));
+            frame.type = Image.Type.Sliced;
+            Corner(frame.rectTransform, new Vector2(0.5f, 0f), new Vector2(0f, -4f * U), new Vector2(98f, 124f) * U, new Vector2(0.5f, 0f));
+            frame.gameObject.SetActive(false);
 
-            Transform cost = Child(card, "Cost", false) ?? NewChild(card, "Cost").transform;
-            Center((RectTransform)cost, new Vector2(0f, -22.5f * U), new Vector2(60f * U, 17f * U));
-            var costRow = Layout<HorizontalLayoutGroup>(cost.gameObject);
-            costRow.spacing = 3f * U;
-            costRow.childAlignment = TextAnchor.MiddleCenter;
-            Fit(cost.gameObject, true, false);
-            Image coin = Icon(cost, "Coin", Sp("icon_coin"), 13f * U, Color.white);
+            Image plate = Img(card, "Name Plate", Sp("name_plate"));
+            plate.type = Image.Type.Sliced;
+            Corner(plate.rectTransform, new Vector2(0.5f, 0f), new Vector2(0f, 5f * U), new Vector2(82f, 21f) * U, new Vector2(0.5f, 0f));
+            TMP_Text name = Child(card, "Name", false) != null ? Child(card, "Name", false).GetComponent<TMP_Text>() : null;
+            if (name == null) name = Text(plate.transform, "Name", display, fontSemi, 12f * U, HudTheme.Contour);
+            name.transform.SetParent(plate.transform, false);
+            name.text = display;
+            Style(name, fontSemi, 12f * U, HudTheme.Contour, TextAlignmentOptions.Center);
+            name.enableAutoSizing = true; // "hojarasquín" / "madremonte"
+            name.fontSizeMin = 8f * U;
+            name.fontSizeMax = 12f * U;
+            Stretch(name.rectTransform, new Vector4(3f * U, 1f * U, 3f * U, 0f));
+
+            Image tag = Img(card, "Cost Tag", Sp("cost_tag"));
+            tag.type = Image.Type.Sliced;
+            Corner(tag.rectTransform, new Vector2(0.5f, 1f), Vector2.zero, new Vector2(48f, 20f) * U, new Vector2(0.5f, 1f));
             string costValue = towerButton.towerToPlace != null ? towerButton.towerToPlace.cost.ToString() : "0";
-            TMP_Text costText = Text(cost, "Cost Text", costValue, fontSemi, 13f * U, HudTheme.Contour);
+            TMP_Text costText = Text(tag.transform, "Cost Text", costValue, fontBold, 12f * U, HudTheme.Gold);
+            costText.alignment = TextAlignmentOptions.Center;
+            Stretch(costText.rectTransform, Vector4.zero);
+
+            Button button = card.GetComponent<Button>();
+            button.targetGraphic = portrait;
+            NeutralTint(button);
+            UiPressFeedback fb = GetOrAdd<UiPressFeedback>(card.gameObject);
+            fb.visuals = new[] { portrait.rectTransform, frame.rectTransform, plate.rectTransform, tag.rectTransform };
+            fb.pressDepth = 3f * U;
 
             var view = GetOrAdd<TowerCardView>(card.gameObject);
             view.displayName = display;
-            view.background = bg;
-            view.icon = icon;
-            view.coin = coin;
+            view.background = portrait;
+            view.icon = null;
+            view.coin = null;
             view.nameText = name;
             view.costText = costText;
-            view.normalSprite = Sp("card_normal");
-            view.selectedSprite = Sp("card_selected");
-            view.noGoldSprite = Sp("card_nogold");
+            view.normalSprite = art;
+            view.selectedSprite = art;
+            view.noGoldSprite = art;
+            view.selectedFrame = frame.gameObject;
+        }
+
+        private static void DropShadow(Graphic g)
+        {
+            Shadow shadow = GetOrAdd<Shadow>(g.gameObject);
+            shadow.effectColor = new Color(0.055f, 0.078f, 0.075f, 0.7f);
+            shadow.effectDistance = new Vector2(0f, -5f * U);
         }
 
         private static void BuildPlacementHint(Transform canvas, RectTransform tray)
         {
-            // Phase 12.1: a small, translucent, NON-interactive hint at the top centre, right under the wave indicator
-            // (the 20 px margin above the wave pill cannot hold a 34 px hint). It never receives raycasts, so
-            // TowerManager.IsPointerOverUi ignores it and the ground behind it stays buildable.
+            // Figma "Instrucción": a small translucent ink pill at the bottom, right of the guardian tray. It never
+            // receives raycasts, so TowerManager.IsPointerOverUi ignores it and the ground behind it stays buildable.
             Transform rootT = Child(canvas, "Placement Hint", false) ?? NewChild(canvas, "Placement Hint").transform;
-            Vector2 hintSize = new Vector2(310f, 34f) * U; // ~55 % of the old 559 px width, 34 px high
-            Place(rootT, new Vector2(0.5f, 1f), new Vector2(0f, -(20f + 48f + 8f) * U), hintSize);
+            Vector2 hintSize = new Vector2(300f, 28f) * U;
+            Place(rootT, new Vector2(0.5f, 0f), new Vector2(90f * U, 10f * U), hintSize);
             var view = GetOrAdd<PlacementHintView>(rootT.gameObject);
             CanvasGroup group = GetOrAdd<CanvasGroup>(rootT.gameObject);
             group.alpha = 1f;
@@ -829,48 +1149,47 @@ namespace GameDevAgent.UiTools
 
             Transform panel = Child(rootT, "Panel", false) ?? NewChild(rootT, "Panel").transform;
             Transform oldCancel = Child(panel, "Cancel Button", false);
-            if (oldCancel != null) Object.DestroyImmediate(oldCancel.gameObject); // now a separate real button (below)
-            var oldFit = panel.GetComponent<ContentSizeFitter>();
-            if (oldFit != null) Object.DestroyImmediate(oldFit);
-            var oldRow = panel.GetComponent<HorizontalLayoutGroup>();
-            if (oldRow != null) Object.DestroyImmediate(oldRow);
-            Place(panel, new Vector2(0.5f, 1f), Vector2.zero, hintSize);
-            Image bg = SetImage(panel.gameObject, Sp("panel_surface"));
-            bg.color = new Color(1f, 1f, 1f, 0.6f); // background at 60 %, text stays opaque
+            if (oldCancel != null) Object.DestroyImmediate(oldCancel.gameObject);
+            RemoveLayout(panel.gameObject);
+            Place(panel, new Vector2(0.5f, 0f), Vector2.zero, hintSize);
+            Image bg = SetImage(panel.gameObject, Sp("instr_pill"));
+            bg.color = Color.white;
 
-            TMP_Text message = Text(panel, "Message", "toca una casilla para invocar al mohán", fontBold, 14f * U, HudTheme.Contour);
+            TMP_Text message = Text(panel, "Message", "toca una casilla para invocar al mohán", fontSemi, 13f * U, HudTheme.TextLight);
             message.alignment = TextAlignmentOptions.Center;
             message.textWrappingMode = TextWrappingModes.NoWrap;
             message.enableAutoSizing = true; // "toca una casilla para invocar al hojarasquín" fits at every resolution
-            message.fontSizeMin = 10f * U;
-            message.fontSizeMax = 14f * U;
+            message.fontSizeMin = 9f * U;
+            message.fontSizeMax = 13f * U;
             RectTransform mr = message.rectTransform;
             mr.anchorMin = Vector2.zero;
             mr.anchorMax = Vector2.one;
             mr.pivot = new Vector2(0.5f, 0.5f);
-            mr.offsetMin = new Vector2(14f * U, 2f * U);
-            mr.offsetMax = new Vector2(-14f * U, -2f * U);
+            mr.offsetMin = new Vector2(12f * U, 2f * U);
+            mr.offsetMax = new Vector2(-12f * U, -2f * U);
             foreach (Graphic g in rootT.GetComponentsInChildren<Graphic>(true)) g.raycastTarget = false;
 
-            // "cancelar": a real button (it must keep blocking the build behind it), attached to the right of the tower
-            // tray so it follows the tray width, shown only while a legend is being placed.
-            Transform cancel = Child(tray, "Placement Cancel", false) ?? NewChild(tray, "Placement Cancel").transform;
-            Button button = Plate(cancel, false, false, "cancelar", 112f, 44f);
-            Ignore(cancel.gameObject);
+            // "cancelar": a real button (it must keep blocking the build behind it), bottom-right corner (the Figma
+            // skills slot, free in this game), shown only while a legend is being placed.
+            Transform oldTrayCancel = Child(tray, "Placement Cancel", false);
+            Transform cancel = oldTrayCancel ?? Child(canvas, "Placement Cancel", false) ?? NewChild(canvas, "Placement Cancel").transform;
+            cancel.SetParent(canvas, false);
+            Button button = Link(cancel, "cancelar", HudTheme.Contour, 124f);
             var cr = (RectTransform)cancel;
-            cr.anchorMin = cr.anchorMax = new Vector2(1f, 0.5f);
-            cr.pivot = new Vector2(0f, 0.5f);
-            cr.anchoredPosition = new Vector2(10f * U, 0f);
+            cr.anchorMin = cr.anchorMax = new Vector2(1f, 0f);
+            cr.pivot = new Vector2(1f, 0f);
+            cr.anchoredPosition = new Vector2(-14f * U, 8f * U);
+            Ignore(cancel.gameObject);
             SetOnClick(button, view.Cancel);
 
             rootT.SetSiblingIndex(tray.GetSiblingIndex() + 1);
+            cancel.SetSiblingIndex(rootT.GetSiblingIndex() + 1);
             view.panel = panel.gameObject;
             view.message = message;
             view.cancelButton = cancel.gameObject;
             view.preferredWidth = hintSize.x;
-            view.sideMargin = 16f * U;
-            view.avoid = new[] { "Gold Panel", "Book Integrity", "Pause Button" }
-                .Select(n => Child(canvas, n, false) as RectTransform).Where(r => r != null).ToArray();
+            view.sideMargin = 12f * U;
+            view.avoid = new[] { tray, (RectTransform)cancel };
             panel.gameObject.SetActive(false);
             cancel.gameObject.SetActive(false);
         }
@@ -886,34 +1205,43 @@ namespace GameDevAgent.UiTools
             UnityEventTools.AddPersistentListener(button.onClick, action);
         }
 
-        // ------------------------------------------------------------------ HUD: book, upgrade panel, end screens
-
-        /// <summary>"libro sagrado" integrity pill below the gold pill (real castle health, BookIntegrityView).</summary>
+        /// <summary>"Vida del libro" pill (Figma E): book of the art sheet, carved track with the green fill, value on the bar.</summary>
         private static void BuildBookIntegrity(Transform canvas)
         {
             Transform rootT = Child(canvas, "Book Integrity", false) ?? NewChild(canvas, "Book Integrity").transform;
-            Place(rootT, new Vector2(0f, 1f), new Vector2(32f, -80f) * U, new Vector2(170f, 34f) * U);
+            Place(rootT, new Vector2(0f, 1f), new Vector2(BookPillX, -PillTop) * U, new Vector2(BookPillW, PillHeight) * U);
             var view = GetOrAdd<BookIntegrityView>(rootT.gameObject);
 
             Transform pill = Child(rootT, "Pill", false) ?? NewChild(rootT, "Pill").transform;
-            Place(pill, new Vector2(0f, 1f), Vector2.zero, new Vector2(170f, 34f) * U);
-            SetImage(pill.gameObject, Sp("panel_deep"));
-            var row = Layout<HorizontalLayoutGroup>(pill.gameObject);
-            row.padding = new RectOffset(26, 28, 0, 0);
-            row.spacing = 8f * U;
-            Fit(pill.gameObject, true, false);
-            Text(pill, "Label", "libro sagrado", fontSemi, 13f * U, HudTheme.TextLight);
+            RemoveLayout(pill.gameObject);
+            Place(pill, new Vector2(0f, 1f), Vector2.zero, new Vector2(BookPillW, PillHeight) * U);
+            Pill(pill.gameObject).raycastTarget = false;
+            Hide(pill, "Label");
+
+            Image book = Img(pill, "Book Icon", Sp("res_libro"));
+            Corner(book.rectTransform, new Vector2(0f, 0.5f), new Vector2(4f * U, 0f), new Vector2(32f, 32f) * U, new Vector2(0f, 0.5f));
             Transform track = Child(pill, "Bar", false) ?? NewChild(pill, "Bar").transform;
-            SetImage(track.gameObject, Sp("bar_track"));
-            Element(track.gameObject, 60f * U, 14f * U);
+            Image trackImg = SetImage(track.gameObject, Sp("barra_pista"));
+            trackImg.pixelsPerUnitMultiplier = 34f / 24f;
+            trackImg.raycastTarget = false;
+            Corner((RectTransform)track, new Vector2(0f, 0.5f), new Vector2(38f * U, 0f), new Vector2(144f, 24f) * U, new Vector2(0f, 0.5f));
             Transform fill = Child(track, "Fill", false) ?? NewChild(track, "Fill").transform;
             var fillRect = (RectTransform)fill;
             fillRect.anchorMin = fillRect.anchorMax = new Vector2(0f, 0.5f);
             fillRect.pivot = new Vector2(0f, 0.5f);
-            fillRect.anchoredPosition = new Vector2(2f * U, 0f);
-            fillRect.sizeDelta = new Vector2(56f * U, 10f * U);
-            SetImage(fill.gameObject, Sp("bar_fill"));
-            TMP_Text value = Text(pill, "Value", "100%", fontSemi, 13f * U, HudTheme.Surface);
+            fillRect.anchoredPosition = new Vector2(4f * U, 0f);
+            fillRect.sizeDelta = new Vector2(132f * U, 13f * U);
+            Image fillImg = SetImage(fill.gameObject, Sp("barra_verde"));
+            fillImg.pixelsPerUnitMultiplier = 18f / 13f;
+            fillImg.raycastTarget = false;
+            Transform oldValue = Child(pill, "Value", false);
+            TMP_Text value = oldValue != null ? oldValue.GetComponent<TMP_Text>() : null;
+            if (value == null) value = Text(track, "Value", "100%", fontBold, 13f * U, HudTheme.TextLight);
+            value.transform.SetParent(track, false);
+            Style(value, fontBold, 13f * U, HudTheme.TextLight, TextAlignmentOptions.Center);
+            Shadowed(value);
+            Stretch(value.rectTransform, new Vector4(0f, 1f * U, 0f, 0f));
+            value.transform.SetAsLastSibling();
 
             rootT.SetSiblingIndex(Child(canvas, "Gold Panel", true).GetSiblingIndex() + 1);
             view.content = pill.gameObject;
@@ -921,24 +1249,25 @@ namespace GameDevAgent.UiTools
             view.valueText = value;
         }
 
-        /// <summary>Defender panel (upgrade / retire): deep panel, gold label and plates; actions stay in TowerUpgradePanel.</summary>
+        /// <summary>Defender panel (upgrade / retire): dark carved panel, gold label, carved buttons; actions unchanged.</summary>
         private static void SkinUpgradePanel(Transform canvas)
         {
             Transform panel = Child(canvas, "Tower Upgrade Panel", true);
-            Place(panel, new Vector2(0.5f, 1f), new Vector2(0f, -84f * U), new Vector2(700f, 100f) * U);
+            Place(panel, new Vector2(0.5f, 1f), new Vector2(0f, -68f * U), new Vector2(700f, 100f) * U);
             Image bg = SetImage(panel.gameObject, Sp("detail_deep"));
             bg.raycastTarget = true; // taps on the panel never reach the map
             var row = Layout<HorizontalLayoutGroup>(panel.gameObject);
-            row.padding = new RectOffset(Mathf.RoundToInt(18f * U), Mathf.RoundToInt(14f * U), Mathf.RoundToInt(32f * U), Mathf.RoundToInt(14f * U));
-            row.spacing = 10f * U;
+            row.padding = new RectOffset(Mathf.RoundToInt(16f * U), Mathf.RoundToInt(14f * U), Mathf.RoundToInt(30f * U), Mathf.RoundToInt(10f * U));
+            row.spacing = 8f * U;
             row.childControlWidth = false;
             row.childAlignment = TextAnchor.LowerLeft;
             Fit(panel.gameObject, true, true);
+            Corners(panel, 24f, 3f);
 
-            TMP_Text label = Text(panel, "Label", "MEJORAR DEFENSOR", fontSemi, 12f * U, HudTheme.Gold);
-            label.characterSpacing = 10f;
+            TMP_Text label = Text(panel, "Label", "MEJORAR DEFENSOR", fontTitle, 13f * U, HudTheme.Gold);
+            label.characterSpacing = 6f;
             Ignore(label.gameObject);
-            Corner(label.rectTransform, new Vector2(0f, 1f), new Vector2(20f, -11f) * U, new Vector2(400f, 15f) * U);
+            Corner(label.rectTransform, new Vector2(0f, 1f), new Vector2(22f, -9f) * U, new Vector2(400f, 17f) * U);
             TowerUpgradePanel upgradePanel = panel.GetComponentInParent<TowerUpgradePanel>(true)
                 ?? canvas.GetComponentInChildren<TowerUpgradePanel>(true);
             if (upgradePanel != null) upgradePanel.titleText = label; // "MEJORAR · EL MOHÁN" at runtime
@@ -947,12 +1276,12 @@ namespace GameDevAgent.UiTools
             Transform firerate = Child(panel, "Firerate Upgrade Button", true);
             Transform remove = Child(panel, "Remove Tower Button", true);
             Transform close = Child(panel, "Close Button", true);
-            Plate(range, false, false, "alcance", 190f);
-            Plate(firerate, false, false, "cadencia", 190f);
-            Plate(remove, false, false, "retirar · +50 oro", 190f);
+            Plate(range, false, false, "alcance", 176f);
+            Plate(firerate, false, false, "cadencia", 176f);
+            Carved(remove, Carving.Pergamino, "retirar · +50 oro", 176f, 46f);
             Transform oldClose = Child(close, "Text (TMP)", false);
             if (oldClose != null) oldClose.gameObject.SetActive(false);
-            SquareButton(close, "button_panel", Sp("icon_close"));
+            SquareButton(close, "icon_frame", Sp("icon_close"));
             DisableMeshEffects(panel.gameObject);
             // Reading order: upgrades, retire, close.
             range.SetAsLastSibling();
@@ -961,12 +1290,15 @@ namespace GameDevAgent.UiTools
             close.SetAsLastSibling();
         }
 
-        /// <summary>Victory / defeat panels with the pause components: bone panel, ribbon title, message, plates.</summary>
+        /// <summary>
+        /// Victory / defeat: the window of the Figma pause ("Ventana emergente"): parchment, gold corners, title ribbon,
+        /// message, the main action in musgo and the others in madera / pergamino.
+        /// </summary>
         private static void SkinEndScreen(Transform canvas, string screenName, string titleName, string title, string message,
             (string button, string label, bool primary)[] buttons)
         {
             Transform screen = Child(canvas, screenName, true);
-            Place(screen, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(400f, 240f) * U);
+            Place(screen, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(420f, 222f) * U);
             Image rootImage = screen.GetComponent<Image>();
             if (rootImage != null)
             {
@@ -977,36 +1309,54 @@ namespace GameDevAgent.UiTools
             DisableMeshEffects(screen.gameObject);
 
             Image dim = Img(screen, "Dim", null);
-            dim.color = new Color(0.14f, 0.19f, 0.18f, 0.55f);
+            dim.color = new Color(0.07f, 0.09f, 0.09f, 0.6f);
             dim.raycastTarget = true;
             Center(dim.rectTransform, Vector2.zero, new Vector2(6000f, 6000f));
             dim.transform.SetSiblingIndex(0);
             Image bg = BonePanelBackground(screen);
             bg.transform.SetSiblingIndex(1);
-            Corners(screen, 40f, 4f);
+            Corners(screen, 24f, 3f);
 
-            Transform ribbon = Ribbon(screen, "Title Ribbon", Child(screen, titleName, false)?.GetComponent<TMP_Text>(), title);
-            Corner((RectTransform)ribbon, new Vector2(0.5f, 1f), new Vector2(0f, 30f * U), new Vector2(260f, 56f) * U, new Vector2(0.5f, 1f));
-            TMP_Text msg = Text(screen, "Message", message, fontSemi, 17f * U, HudTheme.Contour);
+            Transform ribbon = TitleRibbon(screen, titleName, title);
+            Corner((RectTransform)ribbon, new Vector2(0.5f, 1f), new Vector2(0f, 29f * U), new Vector2(280f, 54f) * U, new Vector2(0.5f, 1f));
+            TMP_Text msg = Text(screen, "Message", message, fontSemi, 15f * U, HudTheme.Stone);
             msg.alignment = TextAlignmentOptions.Center;
-            Corner(msg.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -50f * U), new Vector2(336f, 22f) * U, new Vector2(0.5f, 1f));
+            Corner(msg.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -38f * U), new Vector2(380f, 20f) * U, new Vector2(0.5f, 1f));
 
             (string button, string label, bool primary) main = buttons[0];
             Transform mainT = Child(screen, main.button, true);
-            Plate(mainT, main.primary, true, main.label, 336f);
-            Corner((RectTransform)mainT, new Vector2(0.5f, 1f), new Vector2(0f, -86f * U), new Vector2(336f, 62f) * U, new Vector2(0.5f, 1f));
+            Carved(mainT, Carving.Musgo, main.label, 230f, 56f);
+            Corner((RectTransform)mainT, new Vector2(0.5f, 1f), new Vector2(0f, -66f * U), new Vector2(230f, 63f) * U, new Vector2(0.5f, 1f));
             Transform row = Child(screen, "Row", false) ?? NewChild(screen, "Row").transform;
-            Corner((RectTransform)row, new Vector2(0.5f, 1f), new Vector2(0f, -158f * U), new Vector2(336f, 52f) * U, new Vector2(0.5f, 1f));
+            Corner((RectTransform)row, new Vector2(0.5f, 1f), new Vector2(0f, -146f * U), new Vector2(380f, 54f) * U, new Vector2(0.5f, 1f));
             var rowLayout = Layout<HorizontalLayoutGroup>(row.gameObject);
             rowLayout.childControlWidth = false;
+            rowLayout.childAlignment = TextAnchor.MiddleCenter;
             rowLayout.spacing = 12f * U;
             for (int i = 1; i < buttons.Length; i++)
             {
                 Transform b = Child(screen, buttons[i].button, false) ?? Child(row, buttons[i].button, true);
                 b.SetParent(row, false);
-                Plate(b, buttons[i].primary, false, buttons[i].label, 162f);
+                bool last = i == buttons.Length - 1;
+                Carved(b, last ? Carving.Pergamino : Carving.Madera, buttons[i].label, 168f, 46f);
             }
             ribbon.SetAsLastSibling();
+        }
+
+        /// <summary>
+        /// Title ribbon that reuses the course title text (tests read it). The course text moved inside the ribbon on an
+        /// earlier run, so it is searched in depth; a second "Label" left by such a run is removed (it drew over it).
+        /// </summary>
+        private static Transform TitleRibbon(Transform parent, string courseTitleName, string title, Transform searchRoot = null)
+        {
+            TMP_Text course = FindTextDeep(searchRoot ?? parent, courseTitleName);
+            Transform existing = Child(parent, "Title Ribbon", false);
+            if (course != null && existing != null)
+            {
+                Transform stray = Child(existing, "Label", false);
+                if (stray != null && stray != course.transform) Object.DestroyImmediate(stray.gameObject);
+            }
+            return Ribbon(parent, "Title Ribbon", course, title);
         }
 
         private static void SkinNotEnoughWarning(Transform canvas)
@@ -1017,12 +1367,54 @@ namespace GameDevAgent.UiTools
             if (text == null) return;
             text.text = "oro insuficiente";
             Style(text, fontBold, 24f * U, HudTheme.Gold, TextAlignmentOptions.Center);
+            text.fontStyle = FontStyles.UpperCase;
+            Shadowed(text);
         }
 
-        // ------------------------------------------------------------------ main menu (P1)
+        // ------------------------------------------------------------------ main menu (Figma "Ancestrales" · A · Inicio)
 
         private const string MainMenuScenePath = "Assets/Course/Scenes/Main Menu.unity";
 
+        // Places an element of the 844x390 Figma frame relative to one corner of the screen (x, y = Figma top-left
+        // position; the corner decides how it moves on wider or taller screens).
+        private static void FigmaPlace(RectTransform r, Vector2 corner, float x, float y, float w, float h)
+        {
+            const float W = 844f, H = 390f;
+            float ax = corner.x < 0.5f ? x : corner.x > 0.5f ? x + w - W : x + w * 0.5f - W * 0.5f;
+            float ay = corner.y > 0.5f ? -y : corner.y < 0.5f ? H - (y + h) : H * 0.5f - (y + h * 0.5f);
+            r.anchorMin = r.anchorMax = corner;
+            r.pivot = new Vector2(corner.x, corner.y);
+            if (corner.x == 0.5f) r.pivot = new Vector2(0.5f, r.pivot.y);
+            r.anchoredPosition = new Vector2(ax, ay) * U;
+            r.sizeDelta = new Vector2(w, h) * U;
+            r.localScale = Vector3.one;
+            r.localEulerAngles = Vector3.zero;
+        }
+
+        private static Image Art(Transform parent, string name, string sprite, Vector2 corner, float x, float y, float w, float h, float alpha = 1f)
+        {
+            Image img = Img(parent, name, Sp(sprite));
+            img.preserveAspect = false;
+            img.color = new Color(1f, 1f, 1f, alpha);
+            FigmaPlace(img.rectTransform, corner, x, y, w, h);
+            return img;
+        }
+
+        private static TMP_Text Caption(Transform parent, string name, string text, float size)
+        {
+            TMP_Text t = Text(parent, name, text, fontSemi, size * U, HudTheme.TextLight);
+            t.alignment = TextAlignmentOptions.Center;
+            Shadowed(t);
+            return t;
+        }
+
+        /// <summary>
+        /// "A · Inicio": the night forest illustration, the ANCESTRALES brand on the left, the Sacred Book on its altar
+        /// with light, magic, butterflies and fireflies on the right, and the actions of the game (unchanged): JUGAR
+        /// (nueva partida) in the centre, COLECCIÓN bottom-left, ELEGIR NIVEL bottom-right (the Figma "Escanear" slot:
+        /// this game has no AR scanning) and the tutorial and exit as icon buttons with their word, top-right (the Figma
+        /// profile / notifications / settings slots: those screens do not exist in the game).
+        /// </summary>
         private static bool SkinMainMenu()
         {
             var scene = UnityEditor.SceneManagement.EditorSceneManager.OpenScene(MainMenuScenePath,
@@ -1031,125 +1423,129 @@ namespace GameDevAgent.UiTools
             foreach (Canvas c in Object.FindObjectsByType<Canvas>(FindObjectsInactive.Include, FindObjectsSortMode.None))
             {
                 if (c.renderMode == RenderMode.ScreenSpaceOverlay
-                    && (c.transform.Find("Title") != null || c.transform.Find("Brand Block") != null)) canvas = c;
+                    && (c.transform.Find("Title") != null || c.transform.Find("Brand Block") != null || c.transform.Find("Inicio") != null)) canvas = c;
             }
-            if (canvas == null) throw new System.Exception("Main Menu overlay canvas with 'Title' not found.");
+            if (canvas == null) throw new System.Exception("Main Menu overlay canvas not found.");
             Transform root = canvas.transform;
 
-            // Brand block (left).
-            Transform brand = Child(root, "Brand Block", false) ?? NewChild(root, "Brand Block").transform;
-            Place(brand, new Vector2(0f, 0.5f), new Vector2(32f * U, 7f * U), new Vector2(388f, 328f) * U);
-            SetImage(brand.gameObject, Sp("brand_deep"));
+            Transform home = Child(root, "Inicio", false) ?? NewChild(root, "Inicio").transform;
+            Stretch((RectTransform)home, Vector4.zero);
+            home.SetSiblingIndex(0);
 
-            Transform clip = Child(brand, "Clip", false) ?? NewChild(brand, "Clip").transform;
-            Stretch((RectTransform)clip, Vector4.zero);
-            Image clipImage = SetImage(clip.gameObject, Sp("brand_deep"));
-            clipImage.raycastTarget = false;
-            GetOrAdd<Mask>(clip.gameObject).showMaskGraphic = false;
-            Image horizon = Img(clip, "Forest Horizon", Sp("forest_horizon"));
-            Corner(horizon.rectTransform, new Vector2(0.5f, 0f), new Vector2(0f, 3f * U), new Vector2(388f, 120f) * U, new Vector2(0.5f, 0f));
-            horizon.color = new Color(1f, 1f, 1f, 0.6f);
+            // Background: night forest + vignette (no raycasts: they never cover a button).
+            Image bg = Img(home, "Fondo", Sp("fondo_selva"));
+            Stretch(bg.rectTransform, Vector4.zero);
+            var fitter = GetOrAdd<AspectRatioFitter>(bg.gameObject);
+            fitter.aspectMode = AspectRatioFitter.AspectMode.EnvelopeParent;
+            fitter.aspectRatio = 2532f / 1170f;
+            bg.transform.SetSiblingIndex(0);
+            Image vignette = Img(home, "Viñeta", Sp("vineta"));
+            Stretch(vignette.rectTransform, Vector4.zero);
+            vignette.transform.SetSiblingIndex(1);
 
-            Transform content = Child(brand, "Content", false) ?? NewChild(brand, "Content").transform;
-            Stretch((RectTransform)content, Vector4.zero);
-            var column = Layout<VerticalLayoutGroup>(content.gameObject);
-            column.childAlignment = TextAnchor.UpperCenter;
-            column.childControlWidth = false;
-            column.padding = new RectOffset(0, 0, Mathf.RoundToInt(21f * U), 0);
-            column.spacing = 6f * U;
-
-            // Phase 12.4: the Sacred Book emblem (MenuJungleBuilder) replaces the castle; the original stays as a fallback.
-            Image emblem = Img(content, "Emblem", sprites.ContainsKey("emblem_libro") ? Sp("emblem_libro") : Sp("emblem"));
+            // Right: the Sacred Book on the altar (the menu emblem), its light and the magic around it.
+            Vector2 TR = new Vector2(1f, 1f), TL = new Vector2(0f, 1f), BL = new Vector2(0f, 0f), BR = new Vector2(1f, 0f);
+            Art(home, "Luz del libro", "luz_libro", TR, 400f, 40f, 420f, 300f);
+            Art(home, "Olvido acecha", "olvido_humo", BL, -90f, 250f, 420f, 200f, 0.9f);
+            Art(home, "Olvido acecha 2", "olvido_humo", BR, 640f, 270f, 336f, 160f, 0.9f);
+            Image emblem = Art(home, "Emblem", "libro_altar", TR, 450f, 74f, 341.6f, 256.2f);
             emblem.preserveAspect = true;
-            Element(emblem.gameObject, 150f * U, 120f * U);
-            TMP_Text title = Child(root, "Title", false) != null ? Child(root, "Title", false).GetComponent<TMP_Text>()
-                : Child(content, "Title", true).GetComponent<TMP_Text>();
-            title.transform.SetParent(content, false);
-            title.text = "Towers of Defencopolis";
-            Style(title, fontTitle, 50f * U, HudTheme.TextLight, TextAlignmentOptions.Center);
-            title.textWrappingMode = TextWrappingModes.Normal;
-            title.lineSpacing = -8f;
-            Element(title.gameObject, 334f * U, 104f * U);
-            Image runes = Img(content, "Runes", Sp("runes"));
-            Element(runes.gameObject, 200f * U, 18f * U);
-            TMP_Text tagline = Text(content, "Tagline", "defiende el libro sagrado · 6 niveles", fontSemi, 17f * U, HudTheme.Surface);
-            tagline.alignment = TextAlignmentOptions.Center;
-            Element(tagline.gameObject, 334f * U, 22f * U);
-            emblem.transform.SetSiblingIndex(0);
-            title.transform.SetSiblingIndex(1);
-            runes.transform.SetSiblingIndex(2);
-            tagline.transform.SetSiblingIndex(3);
+            Image magic = Art(home, "Magia", "fx_magia", TR, 535f, 40f, 143f, 114.4f);
+            GetOrAdd<FireflyTwinkle>(magic.gameObject);
+            Art(home, "Mariposas", "fx_mariposas", TR, 700f, 120f, 57.6f, 75.2f);
+            Image ff1 = Art(home, "Luciérnagas", "luciernagas", TR, 380f, 30f, 240f, 120f);
+            GetOrAdd<FireflyTwinkle>(ff1.gameObject);
+            Image ff2 = Art(home, "Luciérnagas 2", "luciernagas", TL, 20f, 190f, 240f, 120f);
+            GetOrAdd<FireflyTwinkle>(ff2.gameObject);
 
-            Image fireflies = Img(brand, "Fireflies", Sp("fireflies"));
-            Corner(fireflies.rectTransform, new Vector2(0f, 1f), new Vector2(67f * U, -7f * U), new Vector2(240f, 120f) * U);
-            fireflies.color = new Color(1f, 1f, 1f, 0.9f);
-            GetOrAdd<FireflyTwinkle>(fireflies.gameObject);
-            Corners(brand, 40f, 5f);
-            Image mushrooms = Img(brand, "Mushrooms", Sp("mushrooms"));
-            Corner(mushrooms.rectTransform, new Vector2(1f, 0f), new Vector2(-64f * U, -14f * U), new Vector2(72f, 48f) * U, new Vector2(0f, 0f));
-            clip.SetSiblingIndex(0);
-            content.SetSiblingIndex(1);
+            // Left: brand.
+            TMP_Text logo = Child(root, "Title", false) != null ? Child(root, "Title", false).GetComponent<TMP_Text>() : null;
+            if (logo == null) logo = FindTextDeep(root, "Title");
+            if (logo == null) logo = Text(home, "Title", "ANCESTRALES", fontLogo, 48f * U, HudTheme.SurfaceLight);
+            logo.transform.SetParent(home, false);
+            logo.gameObject.SetActive(true);
+            logo.text = "ANCESTRALES";
+            Style(logo, fontLogo, 48f * U, HudTheme.SurfaceLight, TextAlignmentOptions.Left);
+            logo.characterSpacing = 2f;
+            Shadowed(logo);
+            FigmaPlace(logo.rectTransform, TL, 36f, 64f, 420f, 65f);
+            TMP_Text subtitle = Text(home, "Subtitulo", "El último recuerdo", fontTitle, 24f * U, HudTheme.Gold);
+            subtitle.fontStyle = FontStyles.UpperCase;
+            subtitle.characterSpacing = 2f;
+            Shadowed(subtitle);
+            FigmaPlace(subtitle.rectTransform, TL, 40f, 124f, 300f, 33f);
+            TMP_Text tagline = Text(home, "Lema", "«La memoria mantiene vivas las historias»", fontBody, 15f * U, HudTheme.SurfaceLight);
+            Shadowed(tagline);
+            FigmaPlace(tagline.rectTransform, TL, 42f, 160f, 320f, 20f);
+            TMP_Text game = Text(home, "Juego", "Defensa de las Leyendas · 6 niveles", fontSemi, 11f * U, HudTheme.SurfaceLight);
+            game.alpha = 0.7f;
+            FigmaPlace(game.rectTransform, TL, 42f, 190f, 260f, 14f);
+            Art(home, "Rama", "rama", TL, 0f, 0f, 105f, 105f);
 
-            // Menu column (right).
-            Transform menu = Child(root, "Menu", false) ?? NewChild(root, "Menu").transform;
-            Place(menu, new Vector2(1f, 0.5f), new Vector2(-42f * U, -14f * U), new Vector2(300f, 320f) * U);
-            var stack = Layout<VerticalLayoutGroup>(menu.gameObject);
-            stack.childAlignment = TextAnchor.UpperCenter;
-            stack.childControlWidth = false;
-            stack.spacing = 10f * U - 8f; // the 4 px plate shadow is part of each element
+            // Actions.
+            MainMenuView view = GetOrAdd<MainMenuView>(root.gameObject);
             Button newGame = FindButtonDeep(root, "New Game");
             Button tutorial = FindButtonDeep(root, "Tutorial");
             Button quit = FindButtonDeep(root, "Quit Game");
-            newGame.transform.SetParent(menu, false);
-            tutorial.transform.SetParent(menu, false);
-            quit.transform.SetParent(menu, false);
-            Plate(newGame.transform, true, true, "nueva partida", 300f);
-            Image vine = Img(newGame.transform, "Vine", Sp("vine"));
-            Corner(vine.rectTransform, new Vector2(0f, 1f), new Vector2(6f * U, 14f * U), new Vector2(288f, 30f) * U, new Vector2(0f, 1f));
-            vine.transform.SetSiblingIndex(newGame.transform.childCount - 2);
-            Button tutorialPlate = Plate(tutorial.transform, false, false, "tutorial", 280f);
-            Link(quit.transform, "salir del juego", HudTheme.SurfaceLight, 280f);
-            var view = GetOrAdd<MainMenuView>(root.gameObject);
+            Transform levelsT = FindDeep(root, "Level Select Button") ?? NewChild(home, "Level Select Button").transform;
+            Transform collectionT = FindDeep(root, "Collection Button") ?? NewChild(home, "Collection Button").transform;
+            foreach (Transform t in new[] { newGame.transform, tutorial.transform, quit.transform, levelsT, collectionT })
+            {
+                t.SetParent(home, false);
+                Ignore(t.gameObject);
+            }
 
-            // Phase 10 accesses: level select and collection.
-            Transform levelsT = Child(menu, "Level Select Button", false) ?? NewChild(menu, "Level Select Button").transform;
-            Button levels = Plate(levelsT, false, false, "elegir nivel", 280f);
+            Baked(newGame.transform, "btn_jugar", 236f, 77f, "jugar");
+            FigmaPlace((RectTransform)newGame.transform, new Vector2(0.5f, 0f), 304f, 291f, 236f, 77f);
+
+            Button collection = Baked(collectionT, "btn_coleccion", 164f, 59.4f, "colección");
+            FigmaPlace((RectTransform)collectionT, BL, 25.2f, 307.2f, 164f, 59.4f);
+            SetOnClick(collection, view.OpenCollection);
+            Image badge = Img(collectionT, "Contador", Sp("cost_tag"));
+            badge.type = Image.Type.Sliced;
+            Corner(badge.rectTransform, new Vector2(1f, 1f), new Vector2(6f, 8f) * U, new Vector2(40f, 20f) * U, new Vector2(1f, 1f));
+            TMP_Text collectionCount = Text(badge.transform, "Text", "0/0", fontBold, 12f * U, HudTheme.Gold);
+            collectionCount.alignment = TextAlignmentOptions.Center;
+            Stretch(collectionCount.rectTransform, Vector4.zero);
+
+            Button levels = Carved(levelsT, Carving.Madera, "elegir nivel", 172f, 52f);
+            FigmaPlace((RectTransform)levelsT, BR, 647f, 305f, 172f, 59f);
             SetOnClick(levels, view.OpenLevelSelect);
-            Transform collectionT = Child(menu, "Collection Button", false) ?? NewChild(menu, "Collection Button").transform;
-            Button collectionPlate = Plate(collectionT, false, false, "colección", 280f);
-            SetOnClick(collectionPlate, view.OpenCollection);
 
-            newGame.transform.SetSiblingIndex(0);
-            levelsT.SetSiblingIndex(1);
-            tutorial.transform.SetSiblingIndex(2);
-            collectionT.SetSiblingIndex(3);
-            quit.transform.SetSiblingIndex(4);
+            // Top-right icon buttons, each with its word under it (UX principle: "el ícono siempre acompaña a la palabra").
+            Baked(tutorial.transform, "ico_ayuda", 53f, 53f, "tutorial");
+            FigmaPlace((RectTransform)tutorial.transform, TR, 697f, 12f, 53f, 53f);
+            TMP_Text tutorialCaption = Caption(tutorial.transform, "Caption", "tutorial · 0/6", 11f);
+            Corner(tutorialCaption.rectTransform, new Vector2(0.5f, 0f), new Vector2(0f, -15f * U), new Vector2(100f, 14f) * U, new Vector2(0.5f, 0f));
+            Baked(quit.transform, "est_cerrar", 53f, 53f, "salir del juego");
+            FigmaPlace((RectTransform)quit.transform, TR, 772f, 12f, 53f, 53f);
+            TMP_Text quitCaption = Caption(quit.transform, "Caption", "salir", 11f);
+            Corner(quitCaption.rectTransform, new Vector2(0.5f, 0f), new Vector2(0f, -15f * U), new Vector2(80f, 14f) * U, new Vector2(0.5f, 0f));
 
-            view.tutorialLabel = tutorialPlate.GetComponentInChildren<TMP_Text>(true);
-            view.collectionLabel = collectionPlate.GetComponentInChildren<TMP_Text>(true);
+            view.tutorialLabel = tutorialCaption;
+            view.collectionLabel = collectionCount;
 
-            // Collection screen (P6): frame built once here, cards rebuilt from the catalog every time it opens.
+            // Builder leftovers of the "v2 · Bosque" menu.
+            foreach (string n in new[] { "Brand Block", "Menu", "Branch Top", "Branch Bottom" })
+            {
+                Transform old = Child(root, n, false);
+                if (old != null) Object.DestroyImmediate(old.gameObject);
+            }
+
+            // Collection screen: frame built once here, cards rebuilt from the catalog every time it opens.
             Transform collectionScreen = Child(root, "Collection Screen", false) ?? NewChild(root, "Collection Screen").transform;
             collectionScreen.gameObject.SetActive(true);
-            var collection = GetOrAdd<CollectionController>(collectionScreen.gameObject);
-            collection.catalog = AssetDatabase.LoadAssetAtPath<CollectionCatalog>(CatalogPath);
-            collection.hideWhileOpen = new[] { brand.gameObject, menu.gameObject };
-            collection.BuildFrame((button, method) => SetOnClick(button,
-                (UnityEngine.Events.UnityAction)System.Delegate.CreateDelegate(typeof(UnityEngine.Events.UnityAction), collection, method)));
-            collection.BuildPreview();
+            var collectionView = GetOrAdd<CollectionController>(collectionScreen.gameObject);
+            collectionView.catalog = AssetDatabase.LoadAssetAtPath<CollectionCatalog>(CatalogPath);
+            collectionView.hideWhileOpen = new[] { home.gameObject };
+            collectionView.BuildFrame((button, method) => SetOnClick(button,
+                (UnityEngine.Events.UnityAction)System.Delegate.CreateDelegate(typeof(UnityEngine.Events.UnityAction), collectionView, method)));
+            collectionView.BuildPreview();
             collectionScreen.SetAsLastSibling();
             collectionScreen.gameObject.SetActive(false);
-            view.collection = collection;
+            view.collection = collectionView;
 
-            // Corner branches over the 3D scene.
-            Image branchTop = Img(root, "Branch Top", Sp("branch_corner"));
-            Corner(branchTop.rectTransform, new Vector2(0f, 1f), Vector2.zero, new Vector2(133f, 133f) * U);
-            Image branchBottom = Img(root, "Branch Bottom", Sp("branch_corner_bottom"));
-            Corner(branchBottom.rectTransform, new Vector2(0f, 0f), Vector2.zero, new Vector2(112f, 112f) * U);
-            brand.SetSiblingIndex(0);
-            menu.SetSiblingIndex(1);
-            collectionScreen.SetAsLastSibling(); // above the corner branches
-
+            CleanTextSubMeshes(root);
             // In a scene, script changes to prefab instances (the course buttons) are only kept when recorded.
             foreach (Component c in root.GetComponentsInChildren<Component>(true))
             {
@@ -1161,8 +1557,40 @@ namespace GameDevAgent.UiTools
 
             UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(scene);
             bool saved = UnityEditor.SceneManagement.EditorSceneManager.SaveScene(scene);
-            Debug.Log(Tag + (saved ? "Main Menu skinned and saved." : "Could not save the Main Menu scene."));
+            Debug.Log(Tag + (saved ? "Main Menu (Ancestrales · Inicio) built and saved." : "Could not save the Main Menu scene."));
             return saved;
+        }
+
+        /// <summary>
+        /// TextMeshPro keeps one "TMP SubMeshUI" child per extra font / material a text ever used. After the font change
+        /// of phase 18 the old ones (Fredoka, MedievalSharp) stayed in the assets and drew stale glyphs over the new
+        /// text. They are regenerated by TMP when needed, so every saved one is removed.
+        /// </summary>
+        private static void CleanTextSubMeshes(Transform root)
+        {
+            int n = 0;
+            foreach (TMP_SubMeshUI sub in root.GetComponentsInChildren<TMP_SubMeshUI>(true))
+            {
+                if (sub == null) continue;
+                Object.DestroyImmediate(sub.gameObject);
+                n++;
+            }
+            if (n > 0) Debug.Log(Tag + "Removed " + n + " stale TMP sub-meshes under " + root.name);
+        }
+
+        private static Transform FindDeep(Transform root, string name)
+        {
+            foreach (Transform t in root.GetComponentsInChildren<Transform>(true))
+            {
+                if (t.name == name) return t;
+            }
+            return null;
+        }
+
+        private static TMP_Text FindTextDeep(Transform root, string name)
+        {
+            Transform t = FindDeep(root, name);
+            return t != null ? t.GetComponent<TMP_Text>() : null;
         }
 
         private static Button FindButtonDeep(Transform root, string name)
@@ -1174,23 +1602,17 @@ namespace GameDevAgent.UiTools
             throw new System.Exception("Button '" + name + "' not found under '" + root.name + "'");
         }
 
-        // ------------------------------------------------------------------ level select (P3)
+        // ------------------------------------------------------------------ level select (no frame in the Figma file:
+        // built from its components — Botón tallado Volver, Cinta de título, Panel · Pergamino, Nodo de nivel, Panel /
+        // Tallado oscuro, Botón tallado Jugar — over the 3D map of the game)
 
         private const string LevelSelectScenePath = "Assets/Course/Scenes/Level Select.unity";
 
-        /// <summary>
-        /// "v2 · P3 Selección de nivel" without stars: grid of "Nivel v2" cards (Completado / Siguiente / Bloqueado from
-        /// LevelProgress), "N de 6 completados", detail panel with "jugar", back button, ribbon and ornaments. The old
-        /// world-space buttons of the 3D map are removed (their LevelSelectButton data moves to the cards) and the map
-        /// stays as a still background.
-        /// </summary>
         private static bool SkinLevelSelect()
         {
             var scene = UnityEditor.SceneManagement.EditorSceneManager.OpenScene(LevelSelectScenePath,
                 UnityEditor.SceneManagement.OpenSceneMode.Single);
 
-            // Screen-space layer (back button, ribbon, counter, grid, detail, ornaments). The 3D map stays as a still
-            // background (LevelSelectController stops framing/scrolling when a LevelSelectView exists).
             GameObject hudGo = GameObject.Find("Level Select HUD");
             if (hudGo == null)
             {
@@ -1208,30 +1630,29 @@ namespace GameDevAgent.UiTools
             var hud = GetOrAdd<LevelSelectHud>(hudGo);
             var view = GetOrAdd<LevelSelectView>(hudGo);
             Transform root = hudGo.transform;
+            Vector2 TL = new Vector2(0f, 1f);
 
+            // Back: the carved "VOLVER" of the art sheet, top-left (as in every Figma screen).
             Transform backT = Child(root, "Back Button", false) ?? NewChild(root, "Back Button").transform;
-            Place(backT, new Vector2(0f, 1f), new Vector2(32f, -20f) * U, new Vector2(48f, 52f) * U);
-            SetImage(backT.gameObject, Sp("button_panel"));
-            Button back = GetOrAdd<Button>(backT.gameObject);
-            NeutralTint(back);
-            back.targetGraphic = backT.GetComponent<Image>();
+            Button back = Baked(backT, "btn_volver", 112f, 52f, "volver");
+            Place(backT, TL, new Vector2(16f, -12f) * U, new Vector2(112f, 52f) * U);
             SetOnClick(back, hud.GoToMainMenu);
-            Image backIcon = Icon(backT, "Icon", Sp("icon_back"), 24f * U, HudTheme.TextLight);
-            Center(backIcon.rectTransform, new Vector2(0f, 2f * U));
 
             Transform ribbon = Ribbon(root, "Title Ribbon", null, "elige un nivel");
-            Corner((RectTransform)ribbon, new Vector2(0f, 1f), new Vector2(120f, -16f) * U, new Vector2(260f, 56f) * U);
+            Corner((RectTransform)ribbon, TL, new Vector2(150f, -12f) * U, new Vector2(260f, 54f) * U);
 
-            // "N de 6 completados" on a dark pill (no text directly over the 3D scene).
+            // "N de 6 completados" on an ink pill (no text directly over the 3D scene).
             Transform counter = Child(root, "Completed Counter", false) ?? NewChild(root, "Completed Counter").transform;
-            Place(counter, new Vector2(0f, 1f), new Vector2(414f, -27f) * U, new Vector2(173f, 34f) * U);
-            SetImage(counter.gameObject, Sp("pill_deep"));
+            Place(counter, TL, new Vector2(426f, -23f) * U, new Vector2(173f, 30f) * U);
+            Image counterBg = Pill(counter.gameObject);
+            counterBg.raycastTarget = false;
             var counterRow = Layout<HorizontalLayoutGroup>(counter.gameObject);
-            counterRow.padding = new RectOffset(24, 24, 12, 12);
+            counterRow.padding = new RectOffset(Mathf.RoundToInt(14f * U), Mathf.RoundToInt(14f * U), Mathf.RoundToInt(6f * U), Mathf.RoundToInt(6f * U));
+            counterRow.childAlignment = TextAnchor.MiddleCenter;
             Fit(counter.gameObject, true, true);
-            TMP_Text completed = Text(counter, "Text", "0 de 6 completados", fontSemi, 17f * U, HudTheme.SurfaceLight);
+            TMP_Text completed = Text(counter, "Text", "0 de 6 completados", fontSemi, 14f * U, HudTheme.SurfaceLight);
+            Shadowed(completed);
 
-            // Level data: from the old buttons on the 3D map (first run) or from the cards already built.
             var levels = new SortedDictionary<int, string>();
             foreach (LevelSelectButton b in Object.FindObjectsByType<LevelSelectButton>(FindObjectsInactive.Include))
             {
@@ -1239,18 +1660,32 @@ namespace GameDevAgent.UiTools
             }
             if (levels.Count == 0) throw new System.Exception("No LevelSelectButton found in Level Select.");
 
-            const float Gap = 16f;
-            Transform grid = Child(root, "Level Grid", false) ?? NewChild(root, "Level Grid").transform;
-            // Grid and detail keep the Figma composition centred on screen (844 px frame: centre at x = 422).
-            Place(grid, new Vector2(0.5f, 1f), new Vector2(32f - 422f, -96f) * U, new Vector2(482f, 256f) * U);
-            ((RectTransform)grid).pivot = new Vector2(0f, 1f);
+            // Left page: parchment with the six level stones (3 x 2), centred composition of the 844 px frame.
+            Transform page = Child(root, "Level Page", false) ?? NewChild(root, "Level Page").transform;
+            Place(page, new Vector2(0.5f, 1f), new Vector2(24f - 422f, -84f) * U, new Vector2(488f, 284f) * U);
+            ((RectTransform)page).pivot = new Vector2(0f, 1f);
+            BonePanelBackground(page);
+            Corners(page, 24f, 3f);
+            TMP_Text pageTitle = Text(page, "Page Title", "camino de las leyendas", fontTitle, 17f * U, HudTheme.Contour);
+            pageTitle.fontStyle = FontStyles.UpperCase;
+            pageTitle.characterSpacing = 3f;
+            Corner(pageTitle.rectTransform, TL, new Vector2(22f, -14f) * U, new Vector2(380f, 22f) * U);
+
+            // The grid lives inside the page since phase 18; earlier reruns left copies (one per run): keep one.
+            Transform grid = Child(page, "Level Grid", false) ?? Child(root, "Level Grid", false) ?? NewChild(root, "Level Grid").transform;
+            foreach (Transform t in root.GetComponentsInChildren<Transform>(true).Where(t => t.name == "Level Grid" && t != grid).ToList())
+            {
+                Object.DestroyImmediate(t.gameObject);
+            }
+            grid.SetParent(page, false);
+            Place(grid, TL, new Vector2(20f, -44f) * U, new Vector2(448f, 228f) * U);
             foreach (LayoutGroup lg in grid.GetComponents<LayoutGroup>()) if (!(lg is GridLayoutGroup)) Object.DestroyImmediate(lg);
             var gridLayout = GetOrAdd<GridLayoutGroup>(grid.gameObject);
-            gridLayout.cellSize = new Vector2(150f, 122f) * U;               // card + 4 px drop shadow
-            gridLayout.spacing = new Vector2(Gap, Gap - 4f) * U;
+            gridLayout.cellSize = new Vector2(144f, 110f) * U;
+            gridLayout.spacing = new Vector2(8f, 8f) * U;
             gridLayout.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
             gridLayout.constraintCount = 3;
-            gridLayout.childAlignment = TextAnchor.UpperLeft;
+            gridLayout.childAlignment = TextAnchor.UpperCenter;
 
             var cards = new List<LevelCardView>();
             foreach (KeyValuePair<int, string> level in levels)
@@ -1267,44 +1702,50 @@ namespace GameDevAgent.UiTools
                 Object.DestroyImmediate(instanceRoot != null ? instanceRoot : go);
             }
 
-            // Detail panel.
+            // Right: detail on the dark carved panel, JUGAR of the art sheet (the one main action, right side).
             Transform detail = Child(root, "Detail", false) ?? NewChild(root, "Detail").transform;
-            Place(detail, new Vector2(0.5f, 1f), new Vector2(812f - 422f, -96f) * U, new Vector2(264f, 268f) * U);
+            Place(detail, new Vector2(0.5f, 1f), new Vector2(822f - 422f, -84f) * U, new Vector2(286f, 284f) * U);
             ((RectTransform)detail).pivot = new Vector2(1f, 1f);
-            SetImage(detail.gameObject, Sp("detail_deep"));
-            Transform clip = Child(detail, "Clip", false) ?? NewChild(detail, "Clip").transform;
-            Stretch((RectTransform)clip, Vector4.zero);
-            Image clipImage = SetImage(clip.gameObject, Sp("detail_deep"));
-            clipImage.raycastTarget = false;
-            GetOrAdd<Mask>(clip.gameObject).showMaskGraphic = false;
-            Image horizon = Img(clip, "Forest Horizon", Sp("forest_horizon"));
-            Corner(horizon.rectTransform, new Vector2(0f, 0f), new Vector2(0f, -17f * U), new Vector2(388f, 120f) * U, new Vector2(0f, 0f));
-            horizon.color = new Color(1f, 1f, 1f, 0.5f);
-            Corners(detail, 22f, 3f);
+            Image oldDetail = detail.GetComponent<Image>();
+            if (oldDetail != null) { oldDetail.sprite = null; oldDetail.color = new Color(1f, 1f, 1f, 0f); oldDetail.raycastTarget = false; }
+            Transform oldClip = Child(detail, "Clip", false);
+            if (oldClip != null) Object.DestroyImmediate(oldClip.gameObject);
+            TealPanelBackground(detail);
+            Corners(detail, 32f, 3f);
+            Image emblem = Img(detail, "Libro", Sp("libro_altar"));
+            emblem.preserveAspect = true;
+            emblem.color = new Color(1f, 1f, 1f, 0.9f);
+            Corner(emblem.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -86f * U), new Vector2(150f, 112f) * U, new Vector2(0.5f, 1f));
 
-            TMP_Text label = Text(detail, "Label", "SIGUIENTE NIVEL", fontSemi, 12f * U, HudTheme.Gold);
-            label.characterSpacing = 10f;
-            Corner(label.rectTransform, new Vector2(0f, 1f), new Vector2(23f, -21f) * U, new Vector2(218f, 15f) * U);
+            TMP_Text label = Text(detail, "Label", "SIGUIENTE NIVEL", fontTitle, 12f * U, HudTheme.Gold);
+            label.characterSpacing = 8f;
+            Corner(label.rectTransform, TL, new Vector2(24f, -20f) * U, new Vector2(238f, 16f) * U);
             TMP_Text title = Text(detail, "Title", "nivel 1", fontTitle, 28f * U, HudTheme.TextLight);
-            Corner(title.rectTransform, new Vector2(0f, 1f), new Vector2(23f, -42f) * U, new Vector2(218f, 34f) * U);
-            TMP_Text waves = Text(detail, "Waves", "oleadas: 3", fontSemi, 15f * U, HudTheme.Surface);
-            Corner(waves.rectTransform, new Vector2(0f, 1f), new Vector2(23f, -84f) * U, new Vector2(218f, 20f) * U);
+            title.fontStyle = FontStyles.UpperCase;
+            Shadowed(title);
+            Corner(title.rectTransform, TL, new Vector2(24f, -38f) * U, new Vector2(238f, 34f) * U);
+            TMP_Text waves = Text(detail, "Waves", "oleadas: 3", fontSemi, 14f * U, HudTheme.Surface);
+            Corner(waves.rectTransform, TL, new Vector2(24f, -70f) * U, new Vector2(238f, 18f) * U);
             Transform playT = Child(detail, "Play Button", false) ?? NewChild(detail, "Play Button").transform;
-            Button play = Plate(playT, true, true, "jugar", 218f);
-            Corner((RectTransform)playT, new Vector2(0.5f, 0f), new Vector2(0f, 17f * U), new Vector2(218f, 62f) * U, new Vector2(0.5f, 0f));
+            Button play = Baked(playT, "btn_jugar", 206f, 67f, "jugar");
+            Corner((RectTransform)playT, new Vector2(0.5f, 0f), new Vector2(0f, 16f * U), new Vector2(206f, 67f) * U, new Vector2(0.5f, 0f));
             SetOnClick(play, view.Play);
-            clip.SetSiblingIndex(0);
 
-            // Ornaments.
-            Image fireflies = Img(root, "Fireflies", Sp("fireflies"));
-            Corner(fireflies.rectTransform, new Vector2(1f, 1f), new Vector2(-104f, -8f) * U, new Vector2(140f, 80f) * U);
-            fireflies.color = new Color(1f, 1f, 1f, 0.9f);
+            // Ornaments (decorative, no raycasts).
+            foreach (string n in new[] { "Fireflies", "Branch Right", "Mushrooms" })
+            {
+                Transform old = Child(root, n, false);
+                if (old != null) Object.DestroyImmediate(old.gameObject);
+            }
+            Image fireflies = Img(root, "Luciérnagas", Sp("luciernagas"));
+            Corner(fireflies.rectTransform, new Vector2(1f, 1f), new Vector2(-40f, -4f) * U, new Vector2(240f, 120f) * U);
             GetOrAdd<FireflyTwinkle>(fireflies.gameObject);
-            Image branch = Img(root, "Branch Right", Sp("branch_corner_right"));
-            Corner(branch.rectTransform, new Vector2(1f, 1f), Vector2.zero, new Vector2(112f, 112f) * U);
-            Image mushrooms = Img(root, "Mushrooms", Sp("mushrooms"));
-            Corner(mushrooms.rectTransform, new Vector2(0f, 0f), new Vector2(470f, 0f) * U, new Vector2(57.6f, 38.4f) * U, new Vector2(0f, 0f));
+            Image branch = Img(root, "Rama", Sp("rama"));
+            Corner(branch.rectTransform, new Vector2(1f, 1f), Vector2.zero, new Vector2(105f, 105f) * U);
+            branch.rectTransform.localScale = new Vector3(-1f, 1f, 1f);
+            branch.rectTransform.pivot = new Vector2(0f, 1f);
 
+            CleanTextSubMeshes(root);
             view.cards = cards.ToArray();
             view.completedText = completed;
             view.detailLabel = label;
@@ -1317,6 +1758,10 @@ namespace GameDevAgent.UiTools
             return saved;
         }
 
+        /// <summary>
+        /// One level: the "Nodo de nivel" stone (Completado musgo + check, Actual gold and glowing, Bloqueado grey with a
+        /// padlock) and its name under it. The whole cell is the button, so a tap only ever selects this level.
+        /// </summary>
         private static LevelCardView BuildLevelCard(Transform grid, int levelId, string levelToLoad, LevelSelectView view)
         {
             string name = "Level " + levelId;
@@ -1325,33 +1770,50 @@ namespace GameDevAgent.UiTools
             var level = GetOrAdd<LevelSelectButton>(card.gameObject);
             level.levelId = levelId;
             level.levelToLoad = levelToLoad;
-            Image bg = SetImage(card.gameObject, Sp("level_card"));
+            Image hit = GetOrAdd<Image>(card.gameObject);
+            hit.sprite = null;
+            hit.type = Image.Type.Simple;
+            hit.color = new Color(1f, 1f, 1f, 0f);
+            hit.raycastTarget = true;
             Button button = GetOrAdd<Button>(card.gameObject);
             NeutralTint(button);
             ColorBlock colors = button.colors;
-            colors.disabledColor = Color.white; // locked cards stay opaque: grey sprite + padlock show the state
+            colors.disabledColor = Color.white; // locked stones stay opaque: grey stone + padlock show the state
             button.colors = colors;
-            button.targetGraphic = bg;
 
+            Image stone = Img(card, "Stone", Sp("level_next"));
+            stone.preserveAspect = true;
+            Corner(stone.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -4f * U), new Vector2(72f, 72f) * U, new Vector2(0.5f, 1f));
+            stone.transform.SetSiblingIndex(0);
+            button.targetGraphic = stone;
             // The number is the first TMP text of the card (LevelFlowTestRunner reads its digits).
-            TMP_Text number = Text(card, "Number", levelId.ToString(), fontTitle, 46f * U, HudTheme.Contour);
+            TMP_Text number = Text(card, "Number", levelId.ToString(), fontBold, 28f * U, HudTheme.Contour);
             number.alignment = TextAlignmentOptions.Center;
-            Center(number.rectTransform, new Vector2(0f, 16f * U), new Vector2(150f, 50f) * U);
+            Corner(number.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -4f * U), new Vector2(72f, 66f) * U, new Vector2(0.5f, 1f));
             number.transform.SetSiblingIndex(0);
+            stone.transform.SetSiblingIndex(0);
 
             Image ring = Img(card, "Ring", Sp("level_ring"));
-            ring.type = Image.Type.Sliced;
-            Stretch(ring.rectTransform, new Vector4(-4f * U, 0f, -4f * U, -4f * U));
-            Image check = Icon(card, "Check", Sp("icon_check"), 20f * U, HudTheme.Contour);
-            Center(check.rectTransform, new Vector2(0f, -24f * U));
-            TMP_Text next = Text(card, "Next Label", "¡siguiente!", fontBold, 18f * U, HudTheme.TextLight);
+            ring.preserveAspect = true;
+            Corner(ring.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, 0f), new Vector2(80f, 80f) * U, new Vector2(0.5f, 1f));
+            Image check = Img(card, "Check", Sp("est_check"));
+            Corner(check.rectTransform, new Vector2(0.5f, 1f), new Vector2(24f * U, -54f * U), new Vector2(24f, 24f) * U, new Vector2(0.5f, 1f));
+            Image padlock = Img(card, "Padlock", Sp("est_candado"));
+            Corner(padlock.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -20f * U), new Vector2(34f, 34f) * U, new Vector2(0.5f, 1f));
+            TMP_Text next = Text(card, "Next Label", "¡siguiente!", fontBold, 12f * U, HudTheme.Contour);
             next.alignment = TextAlignmentOptions.Center;
-            Center(next.rectTransform, new Vector2(0f, -24f * U), new Vector2(150f, 22f) * U);
-            Image padlock = Icon(card, "Padlock", Sp("icon_lock"), 20f * U, HudTheme.Muted);
-            Center(padlock.rectTransform, new Vector2(0f, -24f * U));
+            next.fontStyle = FontStyles.UpperCase;
+            next.characterSpacing = 6f;
+            Corner(next.rectTransform, new Vector2(0.5f, 0f), new Vector2(0f, 4f * U), new Vector2(140f, 16f) * U, new Vector2(0.5f, 0f));
+            TMP_Text caption = Text(card, "Caption", "nivel " + levelId, fontSemi, 13f * U, HudTheme.Stone);
+            caption.alignment = TextAlignmentOptions.Center;
+            Corner(caption.rectTransform, new Vector2(0.5f, 0f), new Vector2(0f, 18f * U), new Vector2(140f, 16f) * U, new Vector2(0.5f, 0f));
+            UiPressFeedback fb = GetOrAdd<UiPressFeedback>(card.gameObject);
+            fb.visuals = new[] { stone.rectTransform, number.rectTransform, ring.rectTransform, check.rectTransform, padlock.rectTransform };
+            fb.pressDepth = 3f * U;
 
             var cardView = GetOrAdd<LevelCardView>(card.gameObject);
-            cardView.background = bg;
+            cardView.background = stone;
             cardView.number = number;
             cardView.check = check;
             cardView.nextLabel = next;
@@ -1368,115 +1830,121 @@ namespace GameDevAgent.UiTools
             return cardView;
         }
 
-        // ------------------------------------------------------------------ pause (P5 / P5b)
+        // ------------------------------------------------------------------ pause (Figma "Ancestrales" · Pausa (ventana))
 
+        /// <summary>
+        /// 420x280 parchment window: "PAUSA" ribbon, status line, CONTINUAR (musgo), REINICIAR + ELEGIR NIVEL (madera; the
+        /// Figma "Ajustes" slot: the game has no settings screen) and SALIR AL MENÚ (pergamino, the Figma "Salir al
+        /// mapa"), which asks for confirmation inside the same window.
+        /// </summary>
         private static void SkinPauseScreen(Transform canvas)
         {
             Transform screen = Child(canvas, "Pause Screen", true);
             Transform panel = Child(screen, "Pause Panel", false) ?? NewChild(screen, "Pause Panel").transform;
-            Place(panel, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(400f, 284f) * U);
+            Place(panel, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(420f, 280f) * U);
             var column = Layout<VerticalLayoutGroup>(panel.gameObject);
             column.childAlignment = TextAnchor.UpperCenter;
             column.childControlWidth = false;
-            column.padding = new RectOffset(Mathf.RoundToInt(32f * U), Mathf.RoundToInt(32f * U), Mathf.RoundToInt(46f * U), Mathf.RoundToInt(26f * U) - 8);
-            column.spacing = 12f * U - 8f;
+            column.padding = new RectOffset(0, 0, Mathf.RoundToInt(36f * U), Mathf.RoundToInt(18f * U));
+            column.spacing = 8f * U;
             Fit(panel.gameObject, false, true);
 
-            Image roots = Img(panel, "Roots", Sp("roots"));
-            Ignore(roots.gameObject);
-            Corner(roots.rectTransform, new Vector2(0.5f, 0f), new Vector2(-4f * U, 8f * U), new Vector2(388f, 46f) * U, new Vector2(0.5f, 1f));
-            roots.color = new Color(1f, 1f, 1f, 0.9f);
-            Image bg = Img(panel, "Background", Sp("panel_bone"));
-            bg.type = Image.Type.Sliced;
-            Ignore(bg.gameObject);
-            Stretch(bg.rectTransform, new Vector4(-20f * U, -28f * U, -20f * U, -20f * U));
-            Corners(panel, 40f, 4f);
-            Transform title = Ribbon(panel, "Title Ribbon", Child(screen, "Paused", false)?.GetComponent<TMP_Text>(), "pausa");
+            Transform oldRoots = Child(panel, "Roots", false);
+            if (oldRoots != null) Object.DestroyImmediate(oldRoots.gameObject);
+            Image bg = BonePanelBackground(panel);
+            Corners(panel, 24f, 3f);
+            Transform title = TitleRibbon(panel, "Paused", "pausa", screen);
             Ignore(title.gameObject);
-            Corner((RectTransform)title, new Vector2(0.5f, 1f), new Vector2(0f, 30f * U), new Vector2(260f, 56f) * U, new Vector2(0.5f, 1f));
+            Corner((RectTransform)title, new Vector2(0.5f, 1f), new Vector2(-3f * U, 29f * U), new Vector2(260f, 54f) * U, new Vector2(0.5f, 1f));
 
-            TMP_Text status = Text(panel, "Status", "nivel 1 · oleada 1 de 3", fontSemi, 17f * U, HudTheme.Contour);
+            TMP_Text status = Text(panel, "Status", "nivel 1 · oleada 1 de 3", fontSemi, 14f * U, HudTheme.Stone);
             status.alignment = TextAlignmentOptions.Center;
-            Element(status.gameObject, 336f * U, 22f * U);
+            Element(status.gameObject, 380f * U, 18f * U);
 
             Button resume = FindButtonDeep(screen, "Resume");
             resume.transform.SetParent(panel, false);
-            Plate(resume.transform, true, true, "continuar", 336f);
+            Carved(resume.transform, Carving.Musgo, "continuar", 150f, 55f);
 
             Transform row = Child(panel, "Row", false) ?? NewChild(panel, "Row").transform;
             var rowLayout = Layout<HorizontalLayoutGroup>(row.gameObject);
             rowLayout.childControlWidth = false;
-            rowLayout.spacing = 12f * U;
-            Element(row.gameObject, 336f * U, 52f * U);
+            rowLayout.childAlignment = TextAnchor.MiddleCenter;
+            rowLayout.spacing = 14f * U;
+            Element(row.gameObject, 380f * U, 52f * U);
             Transform restartT = Child(row, "Restart Button", false) ?? NewChild(row, "Restart Button").transform;
-            Button restart = Plate(restartT, false, false, "reiniciar", 162f);
+            Button restart = Carved(restartT, Carving.Madera, "reiniciar", 130f, 45f);
             UIController ui = canvas.GetComponentInChildren<UIController>(true) ?? canvas.GetComponentInParent<UIController>();
             if (ui == null) throw new System.Exception("UIController not found in the UI Canvas prefab.");
             SetOnClick(restart, ui.TryAgain);
             Button levelSelect = FindButtonDeep(screen, "Level Select");
             levelSelect.transform.SetParent(row, false);
-            Plate(levelSelect.transform, false, false, "elegir nivel", 162f);
+            Carved(levelSelect.transform, Carving.Madera, "elegir nivel", 150f, 45f);
             restartT.SetSiblingIndex(0);
 
             var view = GetOrAdd<PauseView>(screen.gameObject);
 
             Transform footer = Child(panel, "Footer", false) ?? NewChild(panel, "Footer").transform;
             var footerLayout = Layout<HorizontalLayoutGroup>(footer.gameObject);
-            footerLayout.childAlignment = TextAnchor.MiddleRight;
+            footerLayout.childAlignment = TextAnchor.MiddleCenter;
             footerLayout.childControlWidth = false;
-            Element(footer.gameObject, 336f * U, 48f * U);
+            Element(footer.gameObject, 380f * U, 52f * U);
             Transform exitT = Child(footer, "Exit Link", false) ?? NewChild(footer, "Exit Link").transform;
-            Button exit = Link(exitT, "salir al menú", HudTheme.Contour, 120f);
+            Button exit = Carved(exitT, Carving.Pergamino, "salir al menú", 150f, 45f);
             SetOnClick(exit, view.ShowConfirm);
 
             Transform confirm = Child(panel, "Confirm", false) ?? NewChild(panel, "Confirm").transform;
             var confirmLayout = Layout<VerticalLayoutGroup>(confirm.gameObject);
             confirmLayout.childAlignment = TextAnchor.UpperCenter;
             confirmLayout.childControlWidth = false;
-            confirmLayout.spacing = 10f * U;
+            confirmLayout.spacing = 6f * U;
             Fit(confirm.gameObject, false, true);
-            ((RectTransform)confirm).sizeDelta = new Vector2(336f * U, 100f * U);
+            ((RectTransform)confirm).sizeDelta = new Vector2(380f * U, 90f * U);
             Transform divider = Child(confirm, "Divider", false) ?? NewChild(confirm, "Divider").transform;
             Image dividerImage = GetOrAdd<Image>(divider.gameObject);
             dividerImage.sprite = null;
             dividerImage.color = HudTheme.BoneShade;
             dividerImage.raycastTarget = false;
-            Element(divider.gameObject, 336f * U, 2f * U);
+            Element(divider.gameObject, 340f * U, 2f * U);
             Transform warning = Child(confirm, "Warning", false) ?? NewChild(confirm, "Warning").transform;
             var warningLayout = Layout<HorizontalLayoutGroup>(warning.gameObject);
             warningLayout.childAlignment = TextAnchor.MiddleCenter;
             warningLayout.spacing = 8f * U;
-            Element(warning.gameObject, 336f * U, 22f * U);
-            Icon(warning, "Skull", Sp("icon_skull"), 22f * U, HudTheme.Contour);
-            Text(warning, "Warning Text", "¿salir? se pierde esta partida", fontSemi, 17f * U, HudTheme.Contour);
+            Element(warning.gameObject, 380f * U, 24f * U);
+            Transform oldSkull = Child(warning, "Skull", false);
+            if (oldSkull != null) Object.DestroyImmediate(oldSkull.gameObject);
+            Image icon = Icon(warning, "Aviso", Sp("est_aviso"), 22f * U, Color.white);
+            icon.transform.SetSiblingIndex(0);
+            TMP_Text warningText = Text(warning, "Warning Text", "¿salir? se pierde esta partida", fontSemi, 15f * U, HudTheme.Contour);
+            Style(warningText, fontSemi, 15f * U, HudTheme.Contour, TextAlignmentOptions.Left);
             Transform answers = Child(confirm, "Answers", false) ?? NewChild(confirm, "Answers").transform;
             var answersLayout = Layout<HorizontalLayoutGroup>(answers.gameObject);
             answersLayout.childControlWidth = false;
-            answersLayout.spacing = 12f * U;
-            Element(answers.gameObject, 336f * U, 52f * U);
+            answersLayout.childAlignment = TextAnchor.MiddleCenter;
+            answersLayout.spacing = 14f * U;
+            Element(answers.gameObject, 380f * U, 52f * U);
             Transform stayT = Child(answers, "Stay Button", false) ?? NewChild(answers, "Stay Button").transform;
-            Button stay = Plate(stayT, false, false, "no, me quedo", 162f);
+            Button stay = Carved(stayT, Carving.Madera, "no, me quedo", 150f, 45f);
             SetOnClick(stay, view.HideConfirm);
             Button mainMenu = FindButtonDeep(screen, "Main Menu");
             mainMenu.transform.SetParent(answers, false);
-            Plate(mainMenu.transform, true, false, "sí, salir", 162f);
+            Carved(mainMenu.transform, Carving.Musgo, "sí, salir", 150f, 45f);
             stayT.SetSiblingIndex(0);
             confirm.gameObject.SetActive(false);
 
             // Order: decorations first (behind), then the content column.
-            roots.transform.SetSiblingIndex(0);
-            bg.transform.SetSiblingIndex(1);
-            status.transform.SetSiblingIndex(2);
-            resume.transform.SetSiblingIndex(3);
-            row.SetSiblingIndex(4);
-            footer.SetSiblingIndex(5);
-            confirm.SetSiblingIndex(6);
+            bg.transform.SetSiblingIndex(0);
+            status.transform.SetSiblingIndex(1);
+            resume.transform.SetSiblingIndex(2);
+            row.SetSiblingIndex(3);
+            footer.SetSiblingIndex(4);
+            confirm.SetSiblingIndex(5);
             title.SetAsLastSibling();
 
             view.status = status;
             view.footer = footer.gameObject;
             view.confirm = confirm.gameObject;
         }
+
 
         // ------------------------------------------------------------------ helpers
 
