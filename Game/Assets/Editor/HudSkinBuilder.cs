@@ -1030,7 +1030,7 @@ namespace GameDevAgent.UiTools
         /// </summary>
         private static RectTransform SkinTray(Transform tray)
         {
-            Place(tray, new Vector2(0f, 0f), new Vector2(12f, 2f) * U, new Vector2(384f, 132f) * U);
+            Place(tray, new Vector2(0f, 0f), new Vector2(12f, 4f) * U, new Vector2(378f, 118f) * U); // phase 20.2: 4 x 90 cards
             Image trayImage = GetOrAdd<Image>(tray.gameObject);
             trayImage.sprite = null;
             trayImage.color = new Color(1f, 1f, 1f, 0f);
@@ -1053,14 +1053,20 @@ namespace GameDevAgent.UiTools
 
         private static string PortraitOf(LegendId legend)
         {
+            // Phase 20.2: the illustrated cards (gold frame, portrait and the legend's name on the parchment plate),
+            // prepared from the reference cards by Tools~/cartas_leyendas.py (backdrop removed, cost plate emptied).
             switch (legend.ToString().ToLowerInvariant())
             {
-                case "madremonte": return "carta_madremonte";
-                case "hojarasquin": return "carta_hojarasquin";
-                case "patasola": return "carta_patasola";
-                default: return "carta_mohan";
+                case "madremonte": return "carta2_madremonte";
+                case "hojarasquin": return "carta2_hojarasquin";
+                case "patasola": return "carta2_patasola";
+                default: return "carta2_mohan";
             }
         }
+
+        // Card sprite proportions (486 x 640 px) and the empty cost plate inside it (normalised, origin bottom-left).
+        private const float CardW = 90f, CardH = 118f; // same tray width as before (4 x 90 + 3 x 6): the placement hint keeps its room
+        private static readonly Vector2 CostPlateMin = new Vector2(0.285f, 0.886f), CostPlateMax = new Vector2(0.732f, 0.975f);
 
         private static void SkinCard(TowerButton towerButton)
         {
@@ -1068,7 +1074,7 @@ namespace GameDevAgent.UiTools
             var rect = (RectTransform)card;
             rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0.5f);
             rect.pivot = new Vector2(0.5f, 0.5f);
-            rect.sizeDelta = new Vector2(90f, 132f) * U; // 90x116 card + the cost tag that rises 16 px above it
+            rect.sizeDelta = new Vector2(CardW, CardH) * U; // the whole illustrated card, cost plate included
             rect.localScale = Vector3.one;
             Image hit = GetOrAdd<Image>(card.gameObject);
             hit.sprite = null;
@@ -1085,41 +1091,59 @@ namespace GameDevAgent.UiTools
             string display = LegendRoster.CardName(legend);
             Sprite art = Sp(PortraitOf(legend));
 
+            // The illustrated card: frame + portrait + name plate, never stretched (same aspect as the rect).
             Image portrait = Img(card, "Portrait", art);
-            Corner(portrait.rectTransform, new Vector2(0.5f, 0f), Vector2.zero, new Vector2(90f, 116f) * U, new Vector2(0.5f, 0f));
+            Stretch(portrait.rectTransform, Vector4.zero);
+            portrait.preserveAspect = true;
             portrait.raycastTarget = false;
             DropShadow(portrait);
+            portrait.transform.SetSiblingIndex(0);
             Image frame = Img(card, "Selected Frame", Sp("sel_frame"));
             frame.type = Image.Type.Sliced;
-            Corner(frame.rectTransform, new Vector2(0.5f, 0f), new Vector2(0f, -4f * U), new Vector2(98f, 124f) * U, new Vector2(0.5f, 0f));
+            Stretch(frame.rectTransform, new Vector4(-4f, -4f, -4f, -4f) * U);
             frame.gameObject.SetActive(false);
 
-            Image plate = Img(card, "Name Plate", Sp("name_plate"));
-            plate.type = Image.Type.Sliced;
-            Corner(plate.rectTransform, new Vector2(0.5f, 0f), new Vector2(0f, 5f * U), new Vector2(86f, 21f) * U, new Vector2(0.5f, 0f)); // phase 20: wider for the readable names
+            // The old parchment plate and cost tag give way to the card's own plates.
+            foreach (string old in new[] { "Name Plate", "Cost Tag" })
+            {
+                Transform t = Child(card, old, false);
+                if (t == null) continue;
+                foreach (TMP_Text keep in t.GetComponentsInChildren<TMP_Text>(true)) keep.transform.SetParent(card, false);
+                Object.DestroyImmediate(t.gameObject);
+            }
+            // The name is painted on the card: the text object stays (accessibility, tests) but is not drawn twice.
             TMP_Text name = Child(card, "Name", false) != null ? Child(card, "Name", false).GetComponent<TMP_Text>() : null;
-            if (name == null) name = Text(plate.transform, "Name", display, fontSemi, 12f * U, HudTheme.Contour);
-            name.transform.SetParent(plate.transform, false);
+            if (name == null) name = Text(card, "Name", display, fontSemi, 12f * U, HudTheme.Contour);
+            name.transform.SetParent(card, false);
             name.text = display;
-            Style(name, fontSemi, 12f * U, HudTheme.Contour, TextAlignmentOptions.Center);
-            name.enableAutoSizing = true; // "hojarasquín" / "madremonte"
-            name.fontSizeMin = HudTheme.Readable(8f * U);
-            name.fontSizeMax = HudTheme.Readable(12f * U);
-            Stretch(name.rectTransform, new Vector4(4f * U, 1f * U, 4f * U, 0f));
+            name.gameObject.SetActive(false);
 
-            Image tag = Img(card, "Cost Tag", Sp("cost_tag"));
-            tag.type = Image.Type.Sliced;
-            Corner(tag.rectTransform, new Vector2(0.5f, 1f), Vector2.zero, new Vector2(48f, 20f) * U, new Vector2(0.5f, 1f));
+            // Functional cost on the card's top plate (the value always comes from the tower).
+            TMP_Text costText = Child(card, "Cost Text", false) != null ? Child(card, "Cost Text", false).GetComponent<TMP_Text>() : null;
             string costValue = towerButton.towerToPlace != null ? towerButton.towerToPlace.cost.ToString() : "0";
-            TMP_Text costText = Text(tag.transform, "Cost Text", costValue, fontBold, 12f * U, HudTheme.Gold);
-            costText.alignment = TextAlignmentOptions.Center;
-            Stretch(costText.rectTransform, Vector4.zero);
+            if (costText == null) costText = Text(card, "Cost Text", costValue, fontTitle, 15f * U, HudTheme.ButtonText);
+            costText.transform.SetParent(card, false);
+            costText.text = costValue;
+            Style(costText, fontTitle, 15f * U, HudTheme.ButtonText, TextAlignmentOptions.Center);
+            // Digits as large as the plate allows (as in the illustrated cards): 16 Figma px, the cap height of
+            // Alegreya SC fills the dark plate; three digits always fit its width.
+            costText.enableAutoSizing = false;
+            costText.fontSize = 16f * U;
+            costText.characterSpacing = 2f;
+            Shadowed(costText);
+            RectTransform cr = costText.rectTransform;
+            cr.anchorMin = CostPlateMin;
+            cr.anchorMax = CostPlateMax;
+            cr.pivot = new Vector2(0.5f, 0.5f);
+            cr.offsetMin = new Vector2(0f, -4f * U);
+            cr.offsetMax = new Vector2(0f, 4f * U);
+            costText.gameObject.SetActive(true);
 
             Button button = card.GetComponent<Button>();
             button.targetGraphic = portrait;
             NeutralTint(button);
             UiPressFeedback fb = GetOrAdd<UiPressFeedback>(card.gameObject);
-            fb.visuals = new[] { portrait.rectTransform, frame.rectTransform, plate.rectTransform, tag.rectTransform };
+            fb.visuals = new[] { portrait.rectTransform, frame.rectTransform, costText.rectTransform };
             fb.pressDepth = 3f * U;
 
             var view = GetOrAdd<TowerCardView>(card.gameObject);

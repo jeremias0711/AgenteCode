@@ -309,6 +309,14 @@ MonoBehaviour:
     sprite: {fileID: 21300000, guid: d88aac214350b8f449e61252df0a4245, type: 3}
   - name: variante_piedra
     sprite: {fileID: 21300000, guid: 07106b7ad52f06c479bf035f0e9d76bb, type: 3}
+  - name: carta2_hojarasquin
+    sprite: {fileID: 21300000, guid: 36afdd92cb783e543b459e32fb96e7d0, type: 3}
+  - name: carta2_madremonte
+    sprite: {fileID: 21300000, guid: 140a979818aa9ec419ee815818a155f6, type: 3}
+  - name: carta2_mohan
+    sprite: {fileID: 21300000, guid: 70fea9ea71bb2b64082c1514916d4674, type: 3}
+  - name: carta2_patasola
+    sprite: {fileID: 21300000, guid: 84ac1d1503da6c64bb2ae4bdcfee2074, type: 3}
   fontBold: {fileID: 11400000, guid: cb96fef28d5b8014db85f5bd0f886383, type: 2}
   fontSemi: {fileID: 11400000, guid: 53eb40e69832e1248b348344ac57a9ce, type: 2}
   fontTitle: {fileID: 11400000, guid: ead21b861bfcc354d8b5d56d04fed814, type: 2}

@@ -31,3 +31,13 @@ Coordenadas en píxeles de la hoja (x, y, ancho, alto). Máscara redondeada como
 ## Capas vectoriales (exportadas en SVG, quitado el fondo del frame y rasterizadas)
 
 `fondo_selva` (Selva andina nocturna, PNG 3x), `libro_altar`, `luz_libro`, `luciernagas`, `olvido_humo`, `rama`, `vineta` (3x), `esquinero`, `cinta_punta` (4x). `cinta_banda` = textura musgo con borde de tinta de 3 px (componente «Cinta de título»).
+
+## Cartas ilustradas de las leyendas (fase 20.2)
+
+`carta2_mohan`, `carta2_madremonte`, `carta2_hojarasquin` y `carta2_patasola`: cartas del HUD (marco dorado, ilustración y nombre en la placa de pergamino), preparadas a partir de las cuatro cartas de referencia del usuario con `GameDevAgentContent/Tools~/cartas_leyendas.py`:
+
+1. Todas a 512x682 (la de Mohán venía a 1086x1448).
+2. Placa superior vaciada: su interior se repinta, fila a fila, interpolando entre los bordes izquierdo y derecho. El costo lo escribe el juego (`Cost Text`, valor de la torre), no la imagen.
+3. Fondo oscuro eliminado con una máscara por filas, limitada al marco dorado y a la placa (nunca entra en la ilustración).
+
+El nombre de cada leyenda es el de la propia carta; el texto `Name` del HUD queda desactivado, para que no aparezca dos veces. Las cartas originales se guardaron en `GameDevAgent_Backups/Phase20_2_*/originales`.
