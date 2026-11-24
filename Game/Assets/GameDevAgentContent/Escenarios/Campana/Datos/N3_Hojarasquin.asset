@@ -1,0 +1,64 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 68e87568630a2bf459bcf2e594f0c81c, type: 3}
+  m_Name: N3_Hojarasquin
+  m_EditorClassIdentifier: Assembly-CSharp::CampaignSceneryData
+  id: N3_Hojarasquin
+  displayName: "Nivel 03 \xB7 Hojarasqu\xEDn"
+  prefabResource: Escenarios/N3_Hojarasquin
+  mobileVariant: {fileID: 0}
+  routes:
+  - name: Path_A
+    points:
+    - {x: 0, y: 0.132, z: -3}
+    - {x: -2.7, y: 0.132, z: -3}
+    - {x: -2.7, y: 0.13200001, z: -0.90000004}
+    - {x: -7.8, y: 0.132, z: -0.90000004}
+    - {x: -7.8, y: 0.132, z: -3}
+    - {x: -12, y: 0.132, z: -3}
+    - {x: -12, y: 0.132, z: -9.6}
+    - {x: -9.6, y: 0.13200001, z: -9.6}
+  castlePosition: {x: -7.8, y: 0.1428, z: -9.6}
+  castleRotation: {x: -0, y: -0, z: -0, w: 1}
+  attackPoints:
+  - {x: -9, y: 0.18629996, z: -9.6}
+  - {x: -8.400001, y: 0.16367312, z: -10.639232}
+  - {x: -7.2000003, y: 0.15773451, z: -10.639231}
+  - {x: -6.6000004, y: 0.14956096, z: -9.6}
+  - {x: -7.2000003, y: 0.14556196, z: -8.56077}
+  - {x: -8.400001, y: 0.15937418, z: -8.56077}
+  bookObjects:
+  - N03_Movil_atril_L2
+  - N03_Movil_libro_L1
+  cameraPosition: {x: -9.960001, y: 18.300001, z: -15.464821}
+  cameraRotation: {x: 0.44386125, y: 0.24449334, z: -0.12727517, w: 0.85264957}
+  orthographic: 1
+  orthographicSize: 8.11398
+  fieldOfView: 60
+  nearClip: 0.1
+  farClip: 300
+  clearFlags: 2
+  background: {r: 0.3, g: 0.36, b: 0.22, a: 1}
+  ambientMode: 1
+  ambientSky: {r: 0.3944, g: 0.406, b: 0.348, a: 0.58}
+  ambientEquator: {r: 0.3132, g: 0.3132, b: 0.24359998, a: 0.58}
+  ambientGround: {r: 0.174, g: 0.174, b: 0.15079999, a: 0.58}
+  ambientLight: {r: 0.3944, g: 0.406, b: 0.348, a: 0.58}
+  ambientIntensity: 1
+  fog: 0
+  fogMode: 3
+  fogColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+  fogDensity: 0.01
+  fogStart: 0
+  fogEnd: 180
+  mainRouteLength: 25.2
+  triangles: 116113
