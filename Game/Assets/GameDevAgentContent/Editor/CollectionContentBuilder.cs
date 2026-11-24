@@ -87,7 +87,7 @@ namespace GameDevAgent.ContentTools
                 CollectionItemDefinition book = catalog.Get("libro_sagrado");
                 if (book != null)
                 {
-                    book.previewPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(LegendContentBuilder.PrefabDir + "/LibroSagrado.prefab");
+                    book.previewPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(SacredBookBuilder.PrefabPath); // phase 20.1: runic book
                     book.functionLabel = "el objetivo que defienden las leyendas";
                     book.appearances = new CollectionAppearance[0];
                     EditorUtility.SetDirty(book);

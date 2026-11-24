@@ -1,6 +1,10 @@
 # Ancestrales · recursos de UI (fase 18)
 
-Recursos del Figma «Ancestrales · El último recuerdo — UI/UX» (archivo `CM7YWQCKca3rtPq4tgNkVJ`), del autor del proyecto. Los importa `HudSkinBuilder.ImportAncestrales` (densidad: 1 téxel = 1 px de Figma salvo los vectores, 3x/4x).
+Recursos del Figma «Ancestrales · El último recuerdo — UI/UX» (archivo `CM7YWQCKca3rtPq4tgNkVJ`), del autor del proyecto. Los importa `HudSkinBuilder.ImportAncestrales` (densidad: 1 téxel = 1 px de Figma salvo los vectores, 3x/4x, y los recortes de la hoja, 2x).
+
+**Fase 20 (nitidez):** la hoja de arte del Figma solo existe a 1536x1024, así que sus recortes se mostraban ampliados unas 2 veces (filtrado bilineal de la GPU). Los recortes `btn_*`, `carta_*`, `arte_*`, `ico_*`, `est_*`, `res_*` y `fx_*` se guardan ahora a 2x, remuestreados con Lanczos (alfa premultiplicado) y un enfoque suave (UnsharpMask radio 1,6, 55 %), e importados con densidad 2: mismo tamaño en pantalla, bordes más definidos. No añade detalle real: la solución definitiva es reexportar la hoja de arte original a 3072x2048 o más. Las piezas de 9 cortes (`tallado_*`, `barra_*`, `cinta_*`) no cambian.
+
+**Fase 20.1 (sin margen negra):** los recortes rectangulares de la hoja arrastraban su fondo oscuro, que se veía como una caja negra alrededor de los botones. En `btn_*`, `carta_*`, `ico_ayuda`, `est_check`, `est_candado` y `est_aviso` ese fondo se elimina por relleno desde los bordes (solo píxeles oscuros conectados con el borde y cercanos al color de fondo, borde suavizado de 1 px), antes de la ampliación 2x; `est_cerrar` recibe una máscara circular. Los retratos `arte_*`, los efectos `fx_*` e `ico_pausa` no se tocan.
 
 ## Recortes de la hoja de arte (`Editor/hoja_ancestrales.png`, 1536x1024, imagen `7f7c4` del Figma; no se incluye en la build)
 

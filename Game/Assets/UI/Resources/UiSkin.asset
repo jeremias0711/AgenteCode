@@ -303,6 +303,12 @@ MonoBehaviour:
     sprite: {fileID: 21300000, guid: b057ce1a3b757474d944b6ffb35cf6e2, type: 3}
   - name: vineta
     sprite: {fileID: 21300000, guid: 47581e3cf4cfbda4e9f813f50f7869e7, type: 3}
+  - name: variante_bronce
+    sprite: {fileID: 21300000, guid: 07258b85d091d4f4292d276a60fc346f, type: 3}
+  - name: variante_oro
+    sprite: {fileID: 21300000, guid: d88aac214350b8f449e61252df0a4245, type: 3}
+  - name: variante_piedra
+    sprite: {fileID: 21300000, guid: 07106b7ad52f06c479bf035f0e9d76bb, type: 3}
   fontBold: {fileID: 11400000, guid: cb96fef28d5b8014db85f5bd0f886383, type: 2}
   fontSemi: {fileID: 11400000, guid: 53eb40e69832e1248b348344ac57a9ce, type: 2}
   fontTitle: {fileID: 11400000, guid: ead21b861bfcc354d8b5d56d04fed814, type: 2}

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -29,6 +29,12 @@ public class CampaignScenery : MonoBehaviour
     public GameObject[] legacyRoots = new GameObject[0];
 
     public static CampaignScenery Current { get; private set; }
+
+    // Phase 20.1: the runic Sacred Book (LibroSagradoRunico.prefab, model units: pedestal 1.90 m wide, book top 2.11 m
+    // with its float) is shown with a pedestal BookDiameter metres wide on the altar of every scenery.
+    public const float BookDiameter = 2.2f;
+    public const float BookModelDiameter = 1.902f;
+    public const float BookModelHeight = 2.11f;
     public CampaignSceneryData Active { get; private set; }
     public GameObject Environment { get; private set; }
     public IReadOnlyList<Path> Routes => routes;
@@ -255,10 +261,13 @@ public class CampaignScenery : MonoBehaviour
         if (castle != null)
         {
             castle.transform.SetPositionAndRotation(data.castlePosition, data.castleRotation);
+            Transform sacredBook = null;
             foreach (Transform child in castle.transform)
             {
-                // Our book model and the old course model give way to the book of the scenery.
-                if (child.name == "Libro Sagrado" || child.name == "Model") child.gameObject.SetActive(false);
+                // Phase 20.1: the Castle's "Libro Sagrado" visual (the runic book on its pedestal) is THE book of every
+                // scenery; the old course model stays hidden.
+                if (child.name == "Model") child.gameObject.SetActive(false);
+                if (child.name == "Libro Sagrado") sacredBook = child;
             }
             if (data.attackPoints != null && data.attackPoints.Length > 0)
             {
@@ -273,12 +282,43 @@ public class CampaignScenery : MonoBehaviour
                 }
                 castle.attackPoints = points;
             }
+            // The package's own book and lectern give way to the runic book: it stands where the lectern stood.
+            float groundY = data.castlePosition.y;
+            bool foundGround = false;
             if (data.bookObjects != null)
             {
                 foreach (string n in data.bookObjects)
                 {
                     Transform book = FindDeep(Environment.transform, n);
-                    if (book != null) book.SetParent(castle.transform, true);
+                    if (book == null) continue;
+                    foreach (Renderer r in book.GetComponentsInChildren<Renderer>())
+                    {
+                        groundY = foundGround ? Mathf.Min(groundY, r.bounds.min.y) : r.bounds.min.y;
+                        foundGround = true;
+                    }
+                    book.SetParent(castle.transform, true);
+                    book.gameObject.SetActive(false);
+                }
+            }
+            if (sacredBook != null)
+            {
+                sacredBook.gameObject.SetActive(true);
+                Vector3 p = castle.transform.position;
+                sacredBook.position = new Vector3(p.x, groundY, p.z);
+                // The cover (+Z of the model) faces the level camera.
+                Vector3 toCam = Vector3.ProjectOnPlane(data.cameraRotation * Vector3.back, Vector3.up);
+                sacredBook.rotation = toCam.sqrMagnitude > 1e-4f ? Quaternion.LookRotation(toCam.normalized, Vector3.up) : castle.transform.rotation;
+                float bookScale = BookDiameter / BookModelDiameter;
+                sacredBook.localScale = Vector3.one * (bookScale / Mathf.Max(0.0001f, castle.transform.lossyScale.x));
+                // The integrity bar floats over the book.
+                if (castle.healthSlider != null)
+                {
+                    Canvas barCanvas = castle.healthSlider.GetComponentInParent<Canvas>();
+                    if (barCanvas != null && barCanvas.transform != castle.transform)
+                    {
+                        Vector3 bp = barCanvas.transform.position;
+                        barCanvas.transform.position = new Vector3(bp.x, groundY + bookScale * BookModelHeight + 0.3f, bp.z);
+                    }
                 }
             }
         }

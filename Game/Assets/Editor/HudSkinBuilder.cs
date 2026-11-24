@@ -663,7 +663,10 @@ namespace GameDevAgent.UiTools
                 string path = AssetDatabase.GUIDToAssetPath(guid);
                 if (path.Contains("/Editor/")) continue; // the source art sheet never ships
                 string name = System.IO.Path.GetFileNameWithoutExtension(path);
-                float d = density.TryGetValue(name, out float v) ? v : 1f;
+                // Phase 20: the art-sheet crops ship at 2x (high-quality resampling, see Ancestrales/README.md).
+                string prefix = name.Split('_')[0];
+                float d = density.TryGetValue(name, out float v) ? v
+                    : prefix == "btn" || prefix == "carta" || prefix == "arte" || prefix == "ico" || prefix == "est" || prefix == "res" || prefix == "fx" ? 2f : 1f;
                 var importer = (TextureImporter)AssetImporter.GetAtPath(path);
                 importer.textureType = TextureImporterType.Sprite;
                 importer.spriteImportMode = SpriteImportMode.Single;
@@ -974,7 +977,8 @@ namespace GameDevAgent.UiTools
         /// </summary>
         private static void SkinWaveBanner(Transform canvas, Transform waveText)
         {
-            const float right = 84f, top = 10f, w = 236f, h = 59f;
+            // Phase 20.1: larger notice (the whole gap between the gold pill and the pause button), bigger type.
+            const float right = 82f, top = 8f, w = 280f, h = 82f;
             Transform banner = Child(canvas, "Wave Banner", false) ?? NewChild(canvas, "Wave Banner").transform;
             Place(banner, new Vector2(1f, 1f), new Vector2(-right, -top) * U, new Vector2(w, h) * U);
             Hide(banner, "Tail Left", "Tail Right", "Band");
@@ -983,8 +987,8 @@ namespace GameDevAgent.UiTools
 
             Image circle = Img(banner, "Info", Sp("info_circle"));
             circle.type = Image.Type.Sliced;
-            Corner(circle.rectTransform, new Vector2(0f, 0.5f), new Vector2(9f * U, 0f), new Vector2(37f, 37f) * U, new Vector2(0f, 0.5f));
-            TMP_Text glyph = Text(circle.transform, "Glyph", "i", fontTitle, 20f * U, HudTheme.Contour);
+            Corner(circle.rectTransform, new Vector2(0f, 0.5f), new Vector2(10f * U, 0f), new Vector2(46f, 46f) * U, new Vector2(0f, 0.5f));
+            TMP_Text glyph = Text(circle.transform, "Glyph", "!", fontTitle, 24f * U, HudTheme.Contour);
             glyph.alignment = TextAlignmentOptions.Center;
             Stretch(glyph.rectTransform, new Vector4(0f, 2f * U, 0f, 0f));
 
@@ -992,12 +996,15 @@ namespace GameDevAgent.UiTools
             RemoveLayout(sub.gameObject);
             Image oldPill = sub.GetComponent<Image>();
             if (oldPill != null) Object.DestroyImmediate(oldPill);
-            Corner((RectTransform)sub, new Vector2(0f, 0f), new Vector2(56f * U, 10f * U), new Vector2(w - 66f, 16f) * U, new Vector2(0f, 0f));
-            TMP_Text subText = Text(sub, "Subtitle Text", "El Olvido se acerca · 12 enemigos", fontBody, 11f * U, HudTheme.TextLight);
-            subText.alpha = 0.85f;
+            Corner((RectTransform)sub, new Vector2(0f, 0f), new Vector2(66f * U, 8f * U), new Vector2(w - 78f, 38f) * U, new Vector2(0f, 0f));
+            TMP_Text subText = Text(sub, "Subtitle Text", "El Olvido se acerca · 12 enemigos", fontBody, 14f * U, HudTheme.TextLight);
+            subText.alpha = 1f;
             subText.enableAutoSizing = true;
-            subText.fontSizeMin = 8f * U;
-            subText.fontSizeMax = 11f * U;
+            subText.fontSizeMin = HudTheme.Readable(11f * U);
+            subText.fontSizeMax = HudTheme.Readable(14f * U);
+            subText.textWrappingMode = TextWrappingModes.Normal; // two lines when "N enemigos" does not fit
+            subText.alignment = TextAlignmentOptions.TopLeft;
+            subText.lineSpacing = -8f;
             Stretch(subText.rectTransform, Vector4.zero);
 
             banner.SetSiblingIndex(waveText.GetSiblingIndex());
@@ -1005,9 +1012,10 @@ namespace GameDevAgent.UiTools
             banner.gameObject.SetActive(false);
 
             TMP_Text text = waveText.GetComponent<TMP_Text>();
-            Place(waveText, new Vector2(1f, 1f), new Vector2(-(right + 10f), -(top + 10f)) * U, new Vector2(w - 66f, 20f) * U);
-            Style(text, fontTitle, 14f * U, HudTheme.Muted, TextAlignmentOptions.Left);
-            text.characterSpacing = 2f;
+            Place(waveText, new Vector2(1f, 1f), new Vector2(-(right + 12f), -(top + 9f)) * U, new Vector2(w - 78f, 28f) * U);
+            Style(text, fontTitle, 20f * U, HudTheme.Gold, TextAlignmentOptions.Left);
+            text.characterSpacing = 3f;
+            Shadowed(text);
             text.text = "¡oleada 1!";
 
             var view = GetOrAdd<WaveBannerView>(waveText.gameObject);
@@ -1088,16 +1096,16 @@ namespace GameDevAgent.UiTools
 
             Image plate = Img(card, "Name Plate", Sp("name_plate"));
             plate.type = Image.Type.Sliced;
-            Corner(plate.rectTransform, new Vector2(0.5f, 0f), new Vector2(0f, 5f * U), new Vector2(82f, 21f) * U, new Vector2(0.5f, 0f));
+            Corner(plate.rectTransform, new Vector2(0.5f, 0f), new Vector2(0f, 5f * U), new Vector2(86f, 21f) * U, new Vector2(0.5f, 0f)); // phase 20: wider for the readable names
             TMP_Text name = Child(card, "Name", false) != null ? Child(card, "Name", false).GetComponent<TMP_Text>() : null;
             if (name == null) name = Text(plate.transform, "Name", display, fontSemi, 12f * U, HudTheme.Contour);
             name.transform.SetParent(plate.transform, false);
             name.text = display;
             Style(name, fontSemi, 12f * U, HudTheme.Contour, TextAlignmentOptions.Center);
             name.enableAutoSizing = true; // "hojarasquín" / "madremonte"
-            name.fontSizeMin = 8f * U;
-            name.fontSizeMax = 12f * U;
-            Stretch(name.rectTransform, new Vector4(3f * U, 1f * U, 3f * U, 0f));
+            name.fontSizeMin = HudTheme.Readable(8f * U);
+            name.fontSizeMax = HudTheme.Readable(12f * U);
+            Stretch(name.rectTransform, new Vector4(4f * U, 1f * U, 4f * U, 0f));
 
             Image tag = Img(card, "Cost Tag", Sp("cost_tag"));
             tag.type = Image.Type.Sliced;
@@ -1159,8 +1167,8 @@ namespace GameDevAgent.UiTools
             message.alignment = TextAlignmentOptions.Center;
             message.textWrappingMode = TextWrappingModes.NoWrap;
             message.enableAutoSizing = true; // "toca una casilla para invocar al hojarasquín" fits at every resolution
-            message.fontSizeMin = 9f * U;
-            message.fontSizeMax = 13f * U;
+            message.fontSizeMin = HudTheme.Readable(9f * U);
+            message.fontSizeMax = HudTheme.Readable(13f * U);
             RectTransform mr = message.rectTransform;
             mr.anchorMin = Vector2.zero;
             mr.anchorMax = Vector2.one;
@@ -1478,7 +1486,7 @@ namespace GameDevAgent.UiTools
             Shadowed(tagline);
             FigmaPlace(tagline.rectTransform, TL, 42f, 160f, 320f, 20f);
             TMP_Text game = Text(home, "Juego", "Defensa de las Leyendas · 6 niveles", fontSemi, 11f * U, HudTheme.SurfaceLight);
-            game.alpha = 0.7f;
+            game.alpha = 0.88f; // phase 20: secondary line, still readable
             FigmaPlace(game.rectTransform, TL, 42f, 190f, 260f, 14f);
             Art(home, "Rama", "rama", TL, 0f, 0f, 105f, 105f);
 
@@ -1783,31 +1791,32 @@ namespace GameDevAgent.UiTools
 
             Image stone = Img(card, "Stone", Sp("level_next"));
             stone.preserveAspect = true;
-            Corner(stone.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -4f * U), new Vector2(72f, 72f) * U, new Vector2(0.5f, 1f));
+            // Phase 20: stones a little smaller so the larger "nivel N" caption and "¡siguiente!" keep clear of them.
+            Corner(stone.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -2f * U), new Vector2(66f, 66f) * U, new Vector2(0.5f, 1f));
             stone.transform.SetSiblingIndex(0);
             button.targetGraphic = stone;
             // The number is the first TMP text of the card (LevelFlowTestRunner reads its digits).
             TMP_Text number = Text(card, "Number", levelId.ToString(), fontBold, 28f * U, HudTheme.Contour);
             number.alignment = TextAlignmentOptions.Center;
-            Corner(number.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -4f * U), new Vector2(72f, 66f) * U, new Vector2(0.5f, 1f));
+            Corner(number.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -2f * U), new Vector2(66f, 61f) * U, new Vector2(0.5f, 1f));
             number.transform.SetSiblingIndex(0);
             stone.transform.SetSiblingIndex(0);
 
             Image ring = Img(card, "Ring", Sp("level_ring"));
             ring.preserveAspect = true;
-            Corner(ring.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, 0f), new Vector2(80f, 80f) * U, new Vector2(0.5f, 1f));
+            Corner(ring.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, 1f * U), new Vector2(74f, 74f) * U, new Vector2(0.5f, 1f));
             Image check = Img(card, "Check", Sp("est_check"));
-            Corner(check.rectTransform, new Vector2(0.5f, 1f), new Vector2(24f * U, -54f * U), new Vector2(24f, 24f) * U, new Vector2(0.5f, 1f));
+            Corner(check.rectTransform, new Vector2(0.5f, 1f), new Vector2(22f * U, -49f * U), new Vector2(24f, 24f) * U, new Vector2(0.5f, 1f));
             Image padlock = Img(card, "Padlock", Sp("est_candado"));
-            Corner(padlock.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -20f * U), new Vector2(34f, 34f) * U, new Vector2(0.5f, 1f));
+            Corner(padlock.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -18f * U), new Vector2(32f, 32f) * U, new Vector2(0.5f, 1f));
             TMP_Text next = Text(card, "Next Label", "¡siguiente!", fontBold, 12f * U, HudTheme.Contour);
             next.alignment = TextAlignmentOptions.Center;
             next.fontStyle = FontStyles.UpperCase;
             next.characterSpacing = 6f;
-            Corner(next.rectTransform, new Vector2(0.5f, 0f), new Vector2(0f, 4f * U), new Vector2(140f, 16f) * U, new Vector2(0.5f, 0f));
+            Corner(next.rectTransform, new Vector2(0.5f, 0f), new Vector2(0f, 1f * U), new Vector2(140f, 18f) * U, new Vector2(0.5f, 0f));
             TMP_Text caption = Text(card, "Caption", "nivel " + levelId, fontSemi, 13f * U, HudTheme.Stone);
             caption.alignment = TextAlignmentOptions.Center;
-            Corner(caption.rectTransform, new Vector2(0.5f, 0f), new Vector2(0f, 18f * U), new Vector2(140f, 16f) * U, new Vector2(0.5f, 0f));
+            Corner(caption.rectTransform, new Vector2(0.5f, 0f), new Vector2(0f, 19f * U), new Vector2(140f, 20f) * U, new Vector2(0.5f, 0f));
             UiPressFeedback fb = GetOrAdd<UiPressFeedback>(card.gameObject);
             fb.visuals = new[] { stone.rectTransform, number.rectTransform, ring.rectTransform, check.rectTransform, padlock.rectTransform };
             fb.pressDepth = 3f * U;
