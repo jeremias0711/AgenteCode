@@ -1,0 +1,82 @@
+{
+ "name": "Silbon",
+ "source": "C:/Users/jerem/OneDrive/Documentos/GameDevAgent/3D_Videojuego/Rigging y animación-20261122T004316Z-1-001/Rigging y animación/Silbon/Silbon Tower Defense (FBX)/Silbon_TowerDefense_FBX/Silbon_TowerDefense_Completo.fbx",
+ "meshes": [
+  {
+   "name": "Silbon_Camisa.001",
+   "faces": 3876,
+   "materials": [
+    "Material.002"
+   ]
+  },
+  {
+   "name": "Silbon_Cuerpo.001",
+   "faces": 4366,
+   "materials": [
+    "Material"
+   ]
+  },
+  {
+   "name": "Silbon_Sombrero.001",
+   "faces": 1519,
+   "materials": [
+    "Material.001"
+   ]
+  }
+ ],
+ "textures": [
+  {
+   "file": "Silbon_Silbon_Camisa001_Albedo.png",
+   "size": [
+    2048,
+    2048
+   ]
+  },
+  {
+   "file": "Silbon_Silbon_Camisa001_Normal.png",
+   "size": [
+    2048,
+    2048
+   ]
+  },
+  {
+   "file": "Silbon_Silbon_Cuerpo001_Albedo.png",
+   "size": [
+    2048,
+    2048
+   ]
+  },
+  {
+   "file": "Silbon_Silbon_Cuerpo001_Normal.png",
+   "size": [
+    2048,
+    2048
+   ]
+  },
+  {
+   "file": "Silbon_Silbon_Sombrero001_Albedo.png",
+   "size": [
+    2048,
+    2048
+   ]
+  },
+  {
+   "file": "Silbon_Silbon_Sombrero001_Normal.png",
+   "size": [
+    2048,
+    2048
+   ]
+  }
+ ],
+ "actions": [
+  "rig|rig|Silbon_Heavy_Weapon_Swing",
+  "rig|rig|Silbon_Reaction",
+  "rig|rig|Silbon_Standing_Melee_Attack_Downward",
+  "rig|rig|Silbon_Standing_Torch_Melee_Attack_03",
+  "rig|rig|Silbon_Taunt",
+  "rig|rig|Silbon_Trote",
+  "rig|rig|Silbon_Trote_InPlace",
+  "rig|rig|Silbon_Zombie_Scream"
+ ],
+ "height": 1.1741997706121765
+}

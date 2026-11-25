@@ -1,0 +1,43 @@
+{
+ "name": "HombreCaiman",
+ "source": "C:\\Users\\jerem\\OneDrive\\Documentos\\GameDevAgent\\3D_Videojuego\\Rigging y animación-20261122T004316Z-1-001\\Rigging y animación\\Hombre Caiman\\Tower Defense\\Acciones runner hombre caiman.blend",
+ "meshes": [
+  {
+   "name": "Mesh0.001",
+   "faces": 10462,
+   "materials": [
+    "Material"
+   ]
+  }
+ ],
+ "textures": [
+  {
+   "file": "HombreCaiman_Mesh0001_Albedo.png",
+   "size": [
+    4096,
+    4096
+   ]
+  },
+  {
+   "file": "HombreCaiman_Mesh0001_Normal.png",
+   "size": [
+    4096,
+    4096
+   ]
+  }
+ ],
+ "actions": [
+  "Runner_01_Correr",
+  "Runner_02_Saltar",
+  "Runner_03_Balanceo_Izquierda",
+  "Runner_04_Balanceo_Derecha",
+  "Runner_05_Deslizamiento",
+  "Runner_06_Tropiezo",
+  "Runner_07_Caida"
+ ],
+ "lowered": [
+  "upper_arm.L",
+  "upper_arm.R"
+ ],
+ "height": 1.7764699459075928
+}
