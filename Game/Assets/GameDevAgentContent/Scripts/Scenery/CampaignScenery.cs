@@ -75,6 +75,9 @@ public class CampaignScenery : MonoBehaviour
             Transform t = ui.transform.Find(n);
             if (t is RectTransform r && t.gameObject.activeInHierarchy) parts.Add(r);
         }
+        // Phase 20.3: the wave notice appears at the start of every wave in the HUD's top row; the framing keeps the
+        // road (and its spawn) clear of it even while it is hidden.
+        if (ui.transform.Find("Wave Banner") is RectTransform notice) parts.Add(notice);
         var corners = new Vector3[4];
         foreach (RectTransform r in parts)
         {

@@ -977,18 +977,20 @@ namespace GameDevAgent.UiTools
         /// </summary>
         private static void SkinWaveBanner(Transform canvas, Transform waveText)
         {
-            // Phase 20.1: larger notice (the whole gap between the gold pill and the pause button), bigger type.
-            const float right = 82f, top = 8f, w = 280f, h = 82f;
+            // Phase 20.3: compact notice in the HUD's top row (the gap between the gold pill and the pause button), so
+            // it never covers the map; WaveBannerView fits its width to that gap on every screen and fades it in/out.
+            const float right = 80f, top = 7f, w = 270f, h = 54f;
             Transform banner = Child(canvas, "Wave Banner", false) ?? NewChild(canvas, "Wave Banner").transform;
             Place(banner, new Vector2(1f, 1f), new Vector2(-right, -top) * U, new Vector2(w, h) * U);
             Hide(banner, "Tail Left", "Tail Right", "Band");
             Image card = Pill(banner.gameObject, "notice_dark");
             card.raycastTarget = false;
+            GetOrAdd<CanvasGroup>(banner.gameObject).blocksRaycasts = false;
 
             Image circle = Img(banner, "Info", Sp("info_circle"));
             circle.type = Image.Type.Sliced;
-            Corner(circle.rectTransform, new Vector2(0f, 0.5f), new Vector2(10f * U, 0f), new Vector2(46f, 46f) * U, new Vector2(0f, 0.5f));
-            TMP_Text glyph = Text(circle.transform, "Glyph", "!", fontTitle, 24f * U, HudTheme.Contour);
+            Corner(circle.rectTransform, new Vector2(0f, 0.5f), new Vector2(9f * U, 0f), new Vector2(34f, 34f) * U, new Vector2(0f, 0.5f));
+            TMP_Text glyph = Text(circle.transform, "Glyph", "!", fontTitle, 18f * U, HudTheme.Contour);
             glyph.alignment = TextAlignmentOptions.Center;
             Stretch(glyph.rectTransform, new Vector4(0f, 2f * U, 0f, 0f));
 
@@ -996,15 +998,22 @@ namespace GameDevAgent.UiTools
             RemoveLayout(sub.gameObject);
             Image oldPill = sub.GetComponent<Image>();
             if (oldPill != null) Object.DestroyImmediate(oldPill);
-            Corner((RectTransform)sub, new Vector2(0f, 0f), new Vector2(66f * U, 8f * U), new Vector2(w - 78f, 38f) * U, new Vector2(0f, 0f));
-            TMP_Text subText = Text(sub, "Subtitle Text", "El Olvido se acerca · 12 enemigos", fontBody, 14f * U, HudTheme.TextLight);
+            // Subtitle: one line under the title, from the circle to the right edge.
+            RectTransform sr = (RectTransform)sub;
+            sr.anchorMin = new Vector2(0f, 0f);
+            sr.anchorMax = new Vector2(1f, 0f);
+            sr.pivot = new Vector2(0f, 0f);
+            sr.anchoredPosition = new Vector2(52f * U, 7f * U);
+            sr.sizeDelta = new Vector2(-62f * U, 20f * U);
+            TMP_Text subText = Text(sub, "Subtitle Text", "El Olvido se acerca · 12 enemigos", fontBody, 13f * U, HudTheme.TextLight);
             subText.alpha = 1f;
             subText.enableAutoSizing = true;
-            subText.fontSizeMin = HudTheme.Readable(11f * U);
-            subText.fontSizeMax = HudTheme.Readable(14f * U);
-            subText.textWrappingMode = TextWrappingModes.Normal; // two lines when "N enemigos" does not fit
-            subText.alignment = TextAlignmentOptions.TopLeft;
-            subText.lineSpacing = -8f;
+            subText.fontSizeMin = 13f * U; // 12 CSS px on a phone
+            subText.fontSizeMax = HudTheme.Readable(13f * U);
+            subText.textWrappingMode = TextWrappingModes.NoWrap;
+            subText.overflowMode = TextOverflowModes.Overflow;
+            subText.alignment = TextAlignmentOptions.BottomLeft;
+            subText.lineSpacing = 0f;
             Stretch(subText.rectTransform, Vector4.zero);
 
             banner.SetSiblingIndex(waveText.GetSiblingIndex());
@@ -1012,11 +1021,12 @@ namespace GameDevAgent.UiTools
             banner.gameObject.SetActive(false);
 
             TMP_Text text = waveText.GetComponent<TMP_Text>();
-            Place(waveText, new Vector2(1f, 1f), new Vector2(-(right + 12f), -(top + 9f)) * U, new Vector2(w - 78f, 28f) * U);
-            Style(text, fontTitle, 20f * U, HudTheme.Gold, TextAlignmentOptions.Left);
+            Place(waveText, new Vector2(1f, 1f), new Vector2(-(right + 10f), -(top + 6f)) * U, new Vector2(w - 62f, 24f) * U);
+            Style(text, fontTitle, 17f * U, HudTheme.Gold, TextAlignmentOptions.TopLeft);
             text.characterSpacing = 3f;
             Shadowed(text);
             text.text = "¡oleada 1!";
+            GetOrAdd<CanvasGroup>(waveText.gameObject).blocksRaycasts = false;
 
             var view = GetOrAdd<WaveBannerView>(waveText.gameObject);
             view.banner = banner.gameObject;
@@ -1030,18 +1040,31 @@ namespace GameDevAgent.UiTools
         /// </summary>
         private static RectTransform SkinTray(Transform tray)
         {
-            Place(tray, new Vector2(0f, 0f), new Vector2(12f, 4f) * U, new Vector2(378f, 118f) * U); // phase 20.2: 4 x 90 cards
+            Place(tray, new Vector2(0f, 0f), new Vector2(12f, 6f) * U, new Vector2(158f, 206f) * U); // phase 20.3: 2 x 2 grid
             Image trayImage = GetOrAdd<Image>(tray.gameObject);
             trayImage.sprite = null;
             trayImage.color = new Color(1f, 1f, 1f, 0f);
             trayImage.raycastTarget = false; // taps between the cards reach the map
-            var row = Layout<HorizontalLayoutGroup>(tray.gameObject);
-            row.padding = new RectOffset(0, 0, 0, 0);
-            row.spacing = 6f * U;
-            row.childAlignment = TextAnchor.LowerLeft;
-            row.childControlWidth = false;
-            row.childControlHeight = false;
-            Fit(tray.gameObject, true, false); // levels that unlock fewer legends get a narrower tray
+            // Phase 20.3: a compact grid (2 x 2 with four legends, one row of large cards with one or two); the cell size
+            // and columns follow the number of cards unlocked (GuardianTrayLayout, at runtime too).
+            HorizontalOrVerticalLayoutGroup oldRow = tray.GetComponent<HorizontalOrVerticalLayoutGroup>();
+            if (oldRow != null) Object.DestroyImmediate(oldRow);
+            GridLayoutGroup grid = GetOrAdd<GridLayoutGroup>(tray.gameObject);
+            grid.padding = new RectOffset(0, 0, 0, 0);
+            grid.spacing = new Vector2(6f, 6f) * U;
+            grid.startCorner = GridLayoutGroup.Corner.UpperLeft;
+            grid.startAxis = GridLayoutGroup.Axis.Horizontal;
+            grid.childAlignment = TextAnchor.LowerLeft;
+            grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+            grid.constraintCount = 2;
+            grid.cellSize = new Vector2(76f, 100f) * U;
+            Fit(tray.gameObject, true, true);
+            RectTransform trayRect = (RectTransform)tray;
+            trayRect.pivot = new Vector2(0f, 0f);
+            var trayLayout = GetOrAdd<GuardianTrayLayout>(tray.gameObject);
+            trayLayout.largeCard = new Vector2(CardW, CardH) * U;
+            trayLayout.smallCard = new Vector2(76f, 100f) * U;
+            trayLayout.costFontAtLarge = 16f * U;
 
             foreach (TowerButton towerButton in tray.GetComponentsInChildren<TowerButton>(true))
             {
